@@ -19,7 +19,7 @@ export class AuthService {
     }
 
     const newUser = this.userRepository.create(user);
-    newUser.role = UserRole.USER;
+    newUser.role = UserRole.User;
 
     return await this.userRepository.save(newUser);
   }

@@ -1,14 +1,14 @@
-import { Purchase } from '../../purchases/entities/purchase.entity';
+import { Order } from '../../purchases/entities/order.entity';
 import { Review } from '../../reviews/entities/review.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-
-export enum AuthProvider {
-  GOOGLE = 'google',
-}
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
+  Admin = 'admin',
+  User = 'user',
+}
+
+export enum AuthProvider {
+  Google = 'google',
 }
 
 @Entity({ name: 'users' })
@@ -19,10 +19,10 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'enum', enum: AuthProvider })
+  @Column({ enum: AuthProvider, type: 'enum' })
   provider: AuthProvider;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  @Column({ enum: UserRole, type: 'enum', default: UserRole.User })
   role: UserRole;
 
   @Column({ name: 'photo_url', nullable: true })
@@ -34,12 +34,12 @@ export class User {
   @Column({ name: 'last_name', nullable: true })
   lastName: string;
 
-  @Column({ name: 'birth_date', nullable: true })
+  @Column({ name: 'birth_date', type: 'datetime', nullable: true })
   birthDate: Date;
 
   @OneToMany(() => Review, (review) => review.author)
   reviews: Review[];
 
-  @OneToMany(() => Purchase, (purchase) => purchase.user)
-  purchases: Purchase[];
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
 }

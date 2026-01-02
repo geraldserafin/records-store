@@ -1,89 +1,103 @@
 import { faker } from '@faker-js/faker';
-import { Vinyl } from './vinyls/entities/vinyl.entity';
-import { Author } from './authors/entities/author.entity';
 import { Product } from './products/entities/product.entity';
 import { DataSource } from 'typeorm';
 import databaseConfig from './config/database.config';
 import { Review } from './reviews/entities/review.entity';
 import { User } from './users/entities/user.entity';
-import { Purchase } from './purchases/entities/purchase.entity';
+import { Order } from './purchases/entities/order.entity';
+import { OrderItem } from './purchases/entities/order-item.entity';
+import { ProductCategory } from './products/entities/product-category.entity';
+import { CategoryAttribute, AttributeType } from './products/entities/category-attribute.entity';
+import { ProductAttributeValue } from './products/entities/product-attribute-value.entity';
 import * as config from 'dotenv';
 
 async function seed() {
   config.config();
 
-  console.log({
-    ...databaseConfig(),
-    password: process.env.MYSQLPASSWORD,
-    username: process.env.MYSQLUSER,
-    host: process.env.MYSQLHOST,
-    port: parseInt(process.env.MYSQLPORT),
-    socketPath: undefined,
-    database: process.env.MYSQLDATABASE,
-    entities: [Author, Product, Vinyl, Review, Author, User, Purchase],
-  });
+  const dbConfig = databaseConfig();
+  const socketPath = process.env.DB_SOCKET || process.env.MYSQL_UNIX_PORT;
+
+  const connectionOptions = {
+    ...dbConfig,
+    username: process.env.DB_USERNAME || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_DATABASE || "vinyl_store",
+    host: socketPath ? undefined : (process.env.DB_HOSTNAME || "localhost"),
+    port: socketPath ? undefined : (parseInt(process.env.DB_PORT) || 3306),
+    socketPath: socketPath,
+    entities: [Product, Review, User, Order, OrderItem, ProductCategory, CategoryAttribute, ProductAttributeValue],
+    synchronize: true, // Force schema sync for the new EAV tables
+  };
+
   try {
-    const dataSource = await new DataSource({
-      ...databaseConfig(),
-      password: process.env.MYSQLPASSWORD,
-      username: process.env.MYSQLUSER,
-      host: process.env.MYSQLHOST,
-      port: parseInt(process.env.MYSQLPORT),
-      database: process.env.MYSQLDATABASE,
-      socketPath: undefined,
-      entities: [Author, Product, Vinyl, Review, Author, User, Purchase],
-    }).initialize();
+    const dataSource = await new DataSource(connectionOptions).initialize();
+    
+    // Clear database to start fresh
+    await dataSource.synchronize(true);
+    
+    console.log('Connected to database (Schema Dropped & Synced)');
 
-    const authorsRepository = dataSource.getRepository(Author);
-    const productsRepository = dataSource.getRepository(Product);
-    const vinylsRepository = dataSource.getRepository(Vinyl);
-    const reviewsRepository = dataSource.getRepository(Review);
+    const categoryRepo = dataSource.getRepository(ProductCategory);
+    const attributeRepo = dataSource.getRepository(CategoryAttribute);
+    const productRepo = dataSource.getRepository(Product);
+    const valueRepo = dataSource.getRepository(ProductAttributeValue);
+    const reviewRepo = dataSource.getRepository(Review);
 
-    console.log('Connected to database');
+    // 1. Setup Vinyl Category & Attributes
+    console.log('Creating Vinyl Category...');
+    const vinylCat = await categoryRepo.save(categoryRepo.create({ name: 'Vinyl' }));
 
-    const authors = [];
-    for (let i = 0; i < 10; i++) {
-      authors.push(authorsRepository.create({ name: faker.person.fullName() }));
-    }
-
-    await authorsRepository.save(authors);
-
-    const vinyls = [];
-    const reviews = [];
+    const vinylAttrs = await attributeRepo.save([
+      attributeRepo.create({ name: 'Artist', type: AttributeType.String, category: vinylCat }),
+      attributeRepo.create({ name: 'RPM', type: AttributeType.Number, category: vinylCat }),
+    ]);
+    
+    // 2. Seed Products
+    console.log('Seeding Products...');
     for (let i = 0; i < 50; i++) {
-      const product = productsRepository.create({
+      const product = await productRepo.save(productRepo.create({
         name: faker.music.album(),
         description: faker.lorem.paragraph(),
         price: parseFloat(faker.commerce.price()),
-      });
+        images: [
+          faker.image.urlLoremFlickr({ category: 'abstract' }),
+          faker.image.urlLoremFlickr({ category: 'technics' }),
+          faker.image.urlLoremFlickr({ category: 'business' }),
+        ],
+        category: vinylCat,
+      }));
 
-      const reviewCount = faker.number.int({ min: 0, max: 10 });
+      // Create Attribute Values
+      await valueRepo.save([
+        valueRepo.create({
+          product,
+          attribute: vinylAttrs.find(a => a.name === 'Artist'),
+          stringValue: faker.person.fullName()
+        }),
+        valueRepo.create({
+          product,
+          attribute: vinylAttrs.find(a => a.name === 'RPM'),
+          numberValue: faker.helpers.arrayElement([33, 45])
+        })
+      ]);
 
+      // Create Reviews
+      const reviewCount = faker.number.int({ min: 0, max: 5 });
       for (let j = 0; j < reviewCount; j++) {
-        reviews.push(
-          reviewsRepository.create({
-            score: faker.number.int({ min: 1, max: 10 }),
-            description: faker.lorem.paragraph(),
-            product: { id: product.id },
-            author: null,
-          }),
-        );
+        await reviewRepo.save(reviewRepo.create({
+          score: faker.number.int({ min: 1, max: 10 }),
+          description: faker.lorem.sentence(),
+          product: product,
+        }));
       }
-
-      const vinyl = vinylsRepository.create({
-        author: faker.helpers.arrayElement(authors),
-        product,
-      });
-
-      vinyls.push(vinyl);
     }
 
-    await vinylsRepository.save(vinyls);
-    await reviewsRepository.save(reviews);
-
     console.log('Seeding completed');
+    await dataSource.destroy();
+    process.exit(0);
   } catch (error) {
     console.error('Seeding failed:', error);
+    process.exit(1);
   }
 }
 

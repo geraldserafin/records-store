@@ -17,7 +17,7 @@ export class Review {
   @ApiProperty()
   description: string;
 
-  @ManyToOne(() => Product, (product) => product.reviews)
+  @ManyToOne(() => Product, (product) => product.reviews, { onDelete: 'CASCADE' })
   @ApiProperty({ type: () => Product })
   product: Product;
 

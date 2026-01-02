@@ -1,18 +1,32 @@
-import { IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { IsInt, IsObject, IsOptional, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { ProductFilterDto } from '../products/dto/product-filter.dto';
 
 export enum SortDirection {
   ASC = 'asc',
   DESC = 'desc',
 }
 
-export abstract class PageOptionsDto {
+export class PageOptionsDto {
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  @Type(() => Number)
+  @ApiProperty({ required: false, default: 1 })
   page: number = 1;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  @Type(() => Number)
+  @ApiProperty({ required: false, default: 10 })
   limit: number = 10;
 
-  @IsObject()
   @IsOptional()
   @ValidateNested()
-  filter?: Partial<{ [k: string]: any }>;
+  @Type(() => ProductFilterDto)
+  filter?: ProductFilterDto;
 
   @IsObject()
   @IsOptional()

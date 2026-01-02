@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: monospace;
+    scrollbar-gutter: stable;
+  }
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  /* Ensure snapshots cover the entire box without gaps */
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+::view-transition-group(*) {
+  /* Use a consistent duration for all morphs */
+  animation-duration: 0.3s;
+}

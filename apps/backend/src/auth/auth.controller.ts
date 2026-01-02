@@ -36,7 +36,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Handle Google OAuth callback' })
   @ApiOkResponse({ description: 'Successfully authenticated with Google' })
   async googleAuthCallback() {
-    return { url: `${this.configService.appUrl}/users/me` };
+    return { url: `${this.configService.appUrl}/profile` };
   }
 
   @Get('logout')

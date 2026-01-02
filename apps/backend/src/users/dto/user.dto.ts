@@ -28,6 +28,10 @@ export class UserDto {
   @ApiProperty()
   birthDate?: Date;
 
+  @Expose()
+  @ApiProperty()
+  role: string;
+
   constructor(partial: Partial<UserDto>) {
     Object.assign(this, partial);
   }

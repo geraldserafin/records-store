@@ -1,6 +1,13 @@
 { pkgs, config, ... }:
 
 {
+  env = rec {
+    API_PORT = "1000";
+    FRONTEND_PORT = "5173";
+    FRONTEND_URL = "http://localhost:${FRONTEND_PORT}";
+    VITE_API_URL = "http://localhost:${API_PORT}";
+  };
+
   languages = {
     javascript = {
       enable = true;
@@ -54,6 +61,8 @@
       description = "Open MySQL shell";
     };
   };
+
+  packages = with pkgs; [ stripe-cli ];
 
   # git-hooks.hooks = {
   #   eslint.enable = true;

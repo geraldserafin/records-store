@@ -12,13 +12,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   const { sessionSecret, sessionCookieMaxAge } = sessionConfig();
 
+  app.enableCors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  });
+
   app.use(
     session({
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
+      rolling: true,
       cookie: {
         maxAge: +sessionCookieMaxAge,
+        sameSite: 'lax',
+        secure: false,
+        httpOnly: true,
       },
     }),
   );
@@ -45,7 +54,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.API_PORT ?? 3000);
 
   if (module.hot) {
     module.hot.accept();

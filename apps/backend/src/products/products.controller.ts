@@ -13,21 +13,21 @@ export class ProductsController {
 
   @Public()
   @Get()
-  @ApiOperation({ summary: 'Get all products with EAV attributes' })
+  @ApiOperation({ summary: 'Get all products' })
   findAll(@Query() pageOptions: PageOptionsDto) {
     return this.productsService.findAll(pageOptions);
   }
 
   @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single product with EAV attributes' })
+  @ApiOperation({ summary: 'Get a single product' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOne(id);
   }
 
   @Admin()
   @Post()
-  @ApiOperation({ summary: 'Create a new product with EAV attributes' })
+  @ApiOperation({ summary: 'Create a new product' })
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
   }

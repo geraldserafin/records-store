@@ -46,9 +46,4 @@ export class CreateProductDto {
   @IsOptional()
   @ApiProperty()
   genreIds?: number[];
-
-  @IsObject()
-  @IsOptional()
-  @ApiProperty()
-  attributes?: Record<string, any>;
 }

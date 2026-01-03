@@ -7,8 +7,8 @@ import { User } from './users/entities/user.entity';
 import { Order } from './purchases/entities/order.entity';
 import { OrderItem } from './purchases/entities/order-item.entity';
 import { ProductCategory } from './products/entities/product-category.entity';
-import { CategoryAttribute, AttributeType } from './products/entities/category-attribute.entity';
-import { ProductAttributeValue } from './products/entities/product-attribute-value.entity';
+import { Artist } from './artists/entities/artist.entity';
+import { Genre } from './genres/entities/genre.entity';
 import * as config from 'dotenv';
 
 async function seed() {
@@ -25,8 +25,8 @@ async function seed() {
     host: socketPath ? undefined : (process.env.DB_HOSTNAME || "localhost"),
     port: socketPath ? undefined : (parseInt(process.env.DB_PORT) || 3306),
     socketPath: socketPath,
-    entities: [Product, Review, User, Order, OrderItem, ProductCategory, CategoryAttribute, ProductAttributeValue],
-    synchronize: true, // Force schema sync for the new EAV tables
+    entities: [Product, Review, User, Order, OrderItem, ProductCategory, Artist, Genre],
+    synchronize: true, 
   };
 
   try {
@@ -38,19 +38,13 @@ async function seed() {
     console.log('Connected to database (Schema Dropped & Synced)');
 
     const categoryRepo = dataSource.getRepository(ProductCategory);
-    const attributeRepo = dataSource.getRepository(CategoryAttribute);
     const productRepo = dataSource.getRepository(Product);
-    const valueRepo = dataSource.getRepository(ProductAttributeValue);
     const reviewRepo = dataSource.getRepository(Review);
 
-    // 1. Setup Vinyl Category & Attributes
+    // 1. Setup Vinyl Category
     console.log('Creating Vinyl Category...');
     const vinylCat = await categoryRepo.save(categoryRepo.create({ name: 'Vinyl' }));
 
-    const vinylAttrs = await attributeRepo.save([
-      attributeRepo.create({ name: 'Artist', type: AttributeType.String, category: vinylCat }),
-      attributeRepo.create({ name: 'RPM', type: AttributeType.Number, category: vinylCat }),
-    ]);
     
     // 2. Seed Products
     console.log('Seeding Products...');
@@ -65,21 +59,8 @@ async function seed() {
           faker.image.urlLoremFlickr({ category: 'business' }),
         ],
         category: vinylCat,
+        stock: faker.number.int({ min: 0, max: 100 }),
       }));
-
-      // Create Attribute Values
-      await valueRepo.save([
-        valueRepo.create({
-          product,
-          attribute: vinylAttrs.find(a => a.name === 'Artist'),
-          stringValue: faker.person.fullName()
-        }),
-        valueRepo.create({
-          product,
-          attribute: vinylAttrs.find(a => a.name === 'RPM'),
-          numberValue: faker.helpers.arrayElement([33, 45])
-        })
-      ]);
 
       // Create Reviews
       const reviewCount = faker.number.int({ min: 0, max: 5 });

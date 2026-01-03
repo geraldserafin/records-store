@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
@@ -6,10 +6,6 @@ import { PageOptionsDto } from 'src/dto/page-options.dto';
 import { createPage } from 'src/create-page';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductCategory } from './entities/product-category.entity';
-import { ProductAttributeValue } from './entities/product-attribute-value.entity';
-import { AttributeType, CategoryAttribute } from './entities/category-attribute.entity';
-import { z } from 'zod';
-
 import { CategoriesService } from './categories.service';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Artist } from '../artists/entities/artist.entity';
@@ -26,30 +22,6 @@ export class ProductsService {
     private readonly categoriesService: CategoriesService,
   ) {}
 
-  private createCategorySchema(attributes: CategoryAttribute[]) {
-    const shape: Record<string, z.ZodTypeAny> = {};
-    
-    attributes.forEach(attr => {
-      let schema;
-      switch (attr.type) {
-        case AttributeType.String:
-          schema = z.string();
-          break;
-        case AttributeType.Number:
-          schema = z.coerce.number();
-          break;
-        case AttributeType.Boolean:
-          schema = z.boolean();
-          break;
-        default:
-          schema = z.any();
-      }
-      shape[attr.name] = schema;
-    });
-
-    return z.object(shape);
-  }
-
   async create(createProductDto: CreateProductDto) {
     return await this.dataSource.transaction(async (manager) => {
       const category = await manager.findOne(ProductCategory, {
@@ -59,18 +31,6 @@ export class ProductsService {
       if (!category) {
         throw new NotFoundException(`Category ${createProductDto.categoryId} not found`);
       }
-
-      // Fetch all attributes from the hierarchy
-      const allAttributes = await this.categoriesService.findAllAttributes(category.id);
-
-      const dynamicSchema = this.createCategorySchema(allAttributes);
-      const validationResult = dynamicSchema.safeParse(createProductDto.attributes || {});
-
-      if (!validationResult.success) {
-        throw new BadRequestException(validationResult.error.format());
-      }
-
-      const validatedAttributes = validationResult.data;
 
       // Fetch Artists and Genres if provided
       const artists = createProductDto.artistIds
@@ -92,30 +52,7 @@ export class ProductsService {
         genres,
       });
 
-      const savedProduct = await manager.save(Product, product);
-
-      const valuesToSave = Object.entries(validatedAttributes)
-        .filter(([_, value]) => value !== undefined && value !== null)
-        .map(([key, value]) => {
-          const attrDef = allAttributes.find((a) => a.name === key);
-          
-          const valObj = manager.create(ProductAttributeValue, {
-            product: savedProduct,
-            attribute: attrDef,
-          });
-
-          if (attrDef.type === AttributeType.String) valObj.stringValue = value as string;
-          if (attrDef.type === AttributeType.Number) valObj.numberValue = value as number;
-          if (attrDef.type === AttributeType.Boolean) valObj.booleanValue = value as boolean;
-
-          return valObj;
-        });
-
-      if (valuesToSave.length > 0) {
-        await manager.save(ProductAttributeValue, valuesToSave);
-      }
-
-      return savedProduct;
+      return await manager.save(Product, product);
     });
   }
 
@@ -123,8 +60,6 @@ export class ProductsService {
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.attributeValues', 'attributeValues')
-      .leftJoinAndSelect('attributeValues.attribute', 'attribute')
       .leftJoinAndSelect('product.artists', 'artists')
       .leftJoinAndSelect('product.genres', 'genres');
 
@@ -132,7 +67,7 @@ export class ProductsService {
       return await createPage(queryBuilder, pageOptions);
     }
 
-    const { name, categoryId, attributes } = pageOptions.filter;
+    const { name, categoryId } = pageOptions.filter;
 
     if (name) {
       queryBuilder.andWhere('product.name LIKE :name', { name: `%${name}%` });
@@ -147,22 +82,6 @@ export class ProductsService {
       }
     }
 
-    if (attributes && typeof attributes === 'object') {
-      Object.entries(attributes as Record<string, any>).forEach(([attrName, attrValue], index) => {
-        const valAlias = `pav_${index}`;
-        const attrAlias = `attr_${index}`;
-
-        queryBuilder.innerJoin('product.attributeValues', valAlias);
-        queryBuilder.innerJoin(`${valAlias}.attribute`, attrAlias);
-
-        queryBuilder.andWhere(`${attrAlias}.name = :name_${index}`, { [`name_${index}`]: attrName });
-        queryBuilder.andWhere(
-          `(${valAlias}.stringValue = :val_${index} OR ${valAlias}.numberValue = :val_${index} OR ${valAlias}.booleanValue = :val_${index})`,
-          { [`val_${index}`]: attrValue },
-        );
-      });
-    }
-
     return await createPage(queryBuilder, pageOptions);
   }
 
@@ -171,9 +90,6 @@ export class ProductsService {
       where: { id },
       relations: {
         category: true,
-        attributeValues: {
-          attribute: true,
-        },
         artists: true,
         genres: true,
       },
@@ -190,7 +106,7 @@ export class ProductsService {
     return await this.dataSource.transaction(async (manager) => {
       const product = await manager.findOne(Product, {
         where: { id },
-        relations: { category: true, attributeValues: true, artists: true, genres: true },
+        relations: { category: true, artists: true, genres: true },
       });
 
       if (!product) {
@@ -228,55 +144,7 @@ export class ProductsService {
         product.genres = await manager.findBy(Genre, { id: In(updateProductDto.genreIds) });
       }
 
-      const savedProduct = await manager.save(Product, product);
-
-      // Handle Attributes Update if provided
-      if (updateProductDto.attributes) {
-        // 1. Fetch all valid attributes for the current (possibly updated) category
-        const allAttributes = await this.categoriesService.findAllAttributes(
-          product.category.id,
-        );
-
-        // 2. Validate
-        const dynamicSchema = this.createCategorySchema(allAttributes);
-        const validationResult = dynamicSchema.safeParse(
-          updateProductDto.attributes,
-        );
-        if (!validationResult.success) {
-          throw new BadRequestException(validationResult.error.format());
-        }
-
-        // 3. Clear existing values
-        await manager.delete(ProductAttributeValue, {
-          product: { id: savedProduct.id },
-        });
-
-        // 4. Create new values
-        const valuesToSave = Object.entries(validationResult.data)
-          .filter(([_, value]) => value !== undefined && value !== null)
-          .map(([key, value]) => {
-            const attrDef = allAttributes.find((a) => a.name === key);
-            const valObj = manager.create(ProductAttributeValue, {
-              product: savedProduct,
-              attribute: attrDef,
-            });
-
-            if (attrDef.type === AttributeType.String)
-              valObj.stringValue = value as string;
-            if (attrDef.type === AttributeType.Number)
-              valObj.numberValue = value as number;
-            if (attrDef.type === AttributeType.Boolean)
-              valObj.booleanValue = value as boolean;
-
-            return valObj;
-          });
-
-        if (valuesToSave.length > 0) {
-          await manager.save(ProductAttributeValue, valuesToSave);
-        }
-      }
-
-      return savedProduct;
+      return await manager.save(Product, product);
     });
   }
 

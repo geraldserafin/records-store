@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { ProductStats } from './entities/product-stats.entity';
 import { ProductCategory } from './entities/product-category.entity';
-import { CategoryAttribute } from './entities/category-attribute.entity';
-import { ProductAttributeValue } from './entities/product-attribute-value.entity';
 import { ProductsService } from './products.service';
 import { CategoriesService } from './categories.service';
 import { ProductsController } from './products.controller';
@@ -14,10 +11,7 @@ import { CategoriesController } from './categories.controller';
   imports: [
     TypeOrmModule.forFeature([
       Product,
-      ProductStats,
       ProductCategory,
-      CategoryAttribute,
-      ProductAttributeValue,
     ]),
   ],
   providers: [ProductsService, CategoriesService],

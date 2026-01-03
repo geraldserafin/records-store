@@ -10,7 +10,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProductCategory } from './product-category.entity';
-import { ProductAttributeValue } from './product-attribute-value.entity';
 import { Artist } from '../../artists/entities/artist.entity';
 import { Genre } from '../../genres/entities/genre.entity';
 
@@ -50,12 +49,6 @@ export class Product {
   @ManyToMany(() => Genre, (genre) => genre.products, { eager: true })
   @JoinTable({ name: 'product_genres' })
   genres: Genre[];
-
-  @OneToMany(() => ProductAttributeValue, (value) => value.product, {
-    cascade: true,
-    eager: true,
-  })
-  attributeValues: ProductAttributeValue[];
 
   @OneToMany(() => Review, (review) => review.product)
   reviews: Review[];

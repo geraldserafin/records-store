@@ -10,7 +10,15 @@
     --font-size: 15px;
   }
 
-  * {
+  /* SCOPED RETRO THEME */
+  .retro-theme {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .retro-theme * {
     /* Absolute uniformity as requested */
     font-size: var(--font-size) !important;
     font-family: Arial, Helvetica, sans-serif !important;
@@ -21,44 +29,51 @@
     border-radius: 0 !important;
   }
 
-  body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 20px;
-  }
-
-  a {
+  .retro-theme a {
     color: var(--link-color);
     text-decoration: underline;
   }
 
-  button {
+  .retro-theme button {
     background: #ccc;
     color: black;
     padding: 2px 8px !important;
     cursor: pointer;
   }
 
-  button:hover {
+  .retro-theme button:hover {
     background: var(--accent-color);
     color: white;
   }
 
-  button:disabled {
+  .retro-theme button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
   }
 
-  input,
-  select,
-  textarea {
+  .retro-theme input,
+  .retro-theme select,
+  .retro-theme textarea {
     background: white;
     padding: 2px 4px !important;
   }
+
+  .retro-theme .input {
+    background-color: white;
+    border-bottom: 1px;
+    padding-left: 2px;
+    padding-right: 2px;
+    outline: none;
+  }
 }
 
-/* Laggy View Transitions (12 steps) */
+/* ADMIN THEME BASE */
+.admin-theme {
+  @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  min-height: 100vh;
+}
+
+/* Laggy View Transitions (Scope to retro if possible, but global is safer for now to avoid breaking shop) */
 ::view-transition-old(*),
 ::view-transition-new(*) {
   animation-duration: 0.4s;
@@ -72,28 +87,4 @@
 ::view-transition-group(*) {
   animation-duration: 0.4s;
   animation-timing-function: steps(8);
-}
-
-/* Laggy View Transitions (~8 frames at 0.5s) */
-::view-transition-old(*),
-::view-transition-new(*) {
-  animation-duration: 0.5s;
-  animation-timing-function: steps(8);
-  mix-blend-mode: normal;
-  height: 100%;
-  width: 100%;
-  object-fit: contain;
-}
-
-::view-transition-group(*) {
-  animation-duration: 0.5s;
-  animation-timing-function: steps(8);
-}
-
-.input {
-  background-color: white;
-  border-bottom: 1px;
-  padding-left: 2px;
-  padding-right: 2px;
-  outline: none;
 }

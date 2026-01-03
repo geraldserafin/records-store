@@ -1,98 +1,137 @@
 import { createSignal, createResource, For, Show } from "solid-js";
 import { api } from "../lib/api";
 import { fetchProducts, fetchArtists, fetchGenres } from "../features/products/products.api";
+import { 
+  Package, 
+  Layers, 
+  Plus, 
+  Trash2, 
+  Edit2, 
+  Search, 
+  Check, 
+  X,
+  LayoutDashboard
+} from "lucide-solid";
 import { cn } from "../lib/utils";
 
 const fetchCategories = async () => (await api.get('categories').json());
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = createSignal("products");
+  const [activeView, setActiveView] = createSignal("products");
   const [categories, { refetch }] = createResource(fetchCategories);
 
   return (
-    <div class="w-full">
-      <div class="flex items-center justify-between mb-8 border-4 border-black p-4 bg-[var(--retro-red)] text-white">
-        <h1 class="font-black uppercase">DASHBOARD (SECRET STUFF)</h1>
-        <div class="flex gap-2">
-           <TabButton 
-             active={activeTab() === "products"} 
-             onClick={() => setActiveTab("products")}
-             label="THINGS"
-           />
-           <TabButton 
-             active={activeTab() === "categories"} 
-             onClick={() => setActiveTab("categories")}
-             label="GROUPS"
-           />
+    <div class="admin-theme flex h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Sidebar */}
+      <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
+        <div class="p-6 border-b border-slate-100">
+          <h1 class="font-bold text-xl tracking-tight text-slate-900 flex items-center gap-2">
+            <LayoutDashboard class="w-6 h-6 text-indigo-600" />
+            Admin
+          </h1>
         </div>
-      </div>
+        
+        <nav class="flex-1 p-4 space-y-1">
+          <SidebarButton 
+            active={activeView() === "products"} 
+            onClick={() => setActiveView("products")}
+            icon={Package}
+            label="Products"
+          />
+          <SidebarButton 
+            active={activeView() === "categories"} 
+            onClick={() => setActiveView("categories")}
+            icon={Layers}
+            label="Categories"
+          />
+        </nav>
 
-      <div class="min-h-[500px]">
-        <Show when={activeTab() === "products"}>
-           <ProductAdmin categories={categories() || []} />
-        </Show>
-        <Show when={activeTab() === "categories"}>
-           <CategoryAdmin categories={categories() || []} onUpdate={refetch} />
-        </Show>
-      </div>
+        <div class="p-4 border-t border-slate-100">
+          <a href="/" class="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+            ← Back to Shop
+          </a>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main class="flex-1 overflow-auto">
+        <header class="bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
+          <h2 class="text-2xl font-semibold text-slate-800 capitalize">
+            {activeView()} Management
+          </h2>
+        </header>
+
+        <div class="p-8 max-w-7xl mx-auto">
+          <Show when={activeView() === "products"}>
+             <ProductAdmin categories={categories() || []} />
+          </Show>
+          <Show when={activeView() === "categories"}>
+             <CategoryAdmin categories={categories() || []} onUpdate={refetch} />
+          </Show>
+        </div>
+      </main>
     </div>
   );
 }
 
-function TabButton(props) {
+function SidebarButton(props) {
   return (
     <button 
       onClick={props.onClick}
       class={cn(
-        "font-bold uppercase px-4 py-2 border-2 border-black",
+        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
         props.active 
-          ? "bg-white text-black" 
-          : "bg-black text-white hover:bg-gray-800"
+          ? "bg-indigo-50 text-indigo-700" 
+          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
       )}
     >
+      <props.icon class={cn("w-5 h-5", props.active ? "text-indigo-600" : "text-slate-400")} />
       {props.label}
     </button>
   );
 }
 
-// --- Sub-Components ---
+// --- Product Admin ---
 
 function ProductAdmin(props) {
   const [view, setView] = createSignal("list"); // 'list' | 'create' | 'edit'
   const [editingId, setEditId] = createSignal(null);
+  const [searchTerm, setSearchTerm] = createSignal("");
   
   const [products, { refetch }] = createResource(async () => {
     const res = await fetchProducts(1, 100);
     return res.items;
   });
 
+  const filteredProducts = () => {
+    const term = searchTerm().toLowerCase();
+    return products()?.filter(p => 
+      p.name.toLowerCase().includes(term) || 
+      p.category?.name?.toLowerCase().includes(term)
+    ) || [];
+  };
+
   const [artists] = createResource(fetchArtists);
   const [genres] = createResource(fetchGenres);
 
-  const [formData, setFormData] = createSignal({
-    name: "",
-    shortDescription: "",
-    description: "",
-    price: 0,
-    stock: 0,
-    categoryId: "",
-    images: "",
-    artistIds: [],
-    genreIds: []
-  });
+  const [formData, setFormData] = createSignal(initialFormState());
 
-  const handleCreate = () => {
-    setFormData({
-      name: "", 
-      shortDescription: "", 
-      description: "", 
-      price: 0, 
-      stock: 0, 
-      categoryId: "", 
+  function initialFormState() {
+    return {
+      name: "",
+      shortDescription: "",
+      description: "",
+      price: 0,
+      stock: 0,
+      categoryId: "",
       images: "",
       artistIds: [],
       genreIds: []
-    });
+    };
+  }
+
+  const handleCreate = () => {
+    setFormData(initialFormState());
     setEditId(null);
     setView("create");
   };
@@ -114,7 +153,7 @@ function ProductAdmin(props) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete product?")) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       await api.delete(`products/${id}`);
       refetch();
@@ -141,7 +180,6 @@ function ProductAdmin(props) {
         await api.post('products', { json: payload });
       }
       
-      alert(view() === "edit" ? 'FIXED!' : 'BORN!');
       setView("list");
       refetch();
     } catch (err) { alert(err.message); }
@@ -157,48 +195,60 @@ function ProductAdmin(props) {
   };
 
   return (
-    <div>
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="font-bold uppercase bg-[var(--retro-yellow)] px-2 border-2 border-black">
-          {view() === 'list' ? 'STUFF IN BOXES' : view() === 'edit' ? 'FIXING STUFF' : 'MAKING STUFF'}
-        </h2>
-        <Show when={view() === 'list'}>
-          <button onClick={handleCreate} class="bg-[var(--retro-green)] px-4 py-2 font-bold uppercase border-2 border-black">
-             + ADD NEW
-          </button>
-        </Show>
-        <Show when={view() !== 'list'}>
-          <button onClick={() => setView('list')} class="bg-[var(--retro-red)] text-white px-4 py-2 font-bold uppercase border-2 border-black">
-             NEVERMIND
-          </button>
-        </Show>
-      </div>
-
+    <div class="space-y-6">
       <Show when={view() === 'list'}>
-        <div class="border-4 border-black bg-white">
-          <table class="w-full text-left">
-            <thead class="bg-black text-white uppercase font-bold">
+        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div class="relative w-96">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              value={searchTerm()}
+              onInput={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button 
+            onClick={handleCreate} 
+            class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+             <Plus class="w-4 h-4" /> New Product
+          </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
               <tr>
-                <th class="p-2 border-r-2 border-black">NAME</th>
-                <th class="p-2 border-r-2 border-black text-center">$$</th>
-                <th class="p-2 border-r-2 border-black text-center">HOW MANY?</th>
-                <th class="p-2 text-right">DO STUFF</th>
+                <th class="px-6 py-4">Product Name</th>
+                <th class="px-6 py-4">Price</th>
+                <th class="px-6 py-4">Stock</th>
+                <th class="px-6 py-4">Category</th>
+                <th class="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <For each={products()}>
+            <tbody class="divide-y divide-slate-100">
+              <For each={filteredProducts()}>
                 {(p) => (
-                  <tr class="border-b-2 border-black font-bold">
-                    <td class="p-2 uppercase border-r-2 border-black">{p.name}</td>
-                    <td class="p-2 text-center border-r-2 border-black">${p.price}</td>
-                    <td class="p-2 text-center border-r-2 border-black">
-                      <span class={cn("px-2 py-1 border border-black", p.stock === 0 ? "bg-[var(--retro-red)] text-white" : "bg-[var(--retro-yellow)]")}>
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-slate-900">{p.name}</td>
+                    <td class="px-6 py-4 text-slate-600">${p.price}</td>
+                    <td class="px-6 py-4">
+                      <span class={cn(
+                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                        p.stock === 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+                      )}>
                         {p.stock}
                       </span>
                     </td>
-                    <td class="p-2 text-right space-x-2">
-                      <button onClick={() => handleEdit(p)} class="bg-[var(--retro-blue)] text-white px-2 border border-black">FIX</button>
-                      <button onClick={() => handleDelete(p.id)} class="bg-[var(--retro-red)] text-white px-2 border border-black">BIN</button>
+                    <td class="px-6 py-4 text-slate-500">{p.category?.name}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                      <button onClick={() => handleEdit(p)} class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded">
+                        <Edit2 class="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded">
+                        <Trash2 class="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 )}
@@ -209,98 +259,92 @@ function ProductAdmin(props) {
       </Show>
 
       <Show when={view() !== 'list'}>
-        <form onSubmit={handleSubmit} class="border-4 border-black p-4 bg-white space-y-4">
-             <div class="grid grid-cols-2 gap-4">
-               <div class="flex flex-col">
-                 <label class="font-bold uppercase">NAME</label>
-                 <input required class="border-2 border-black p-2 bg-[#f9f9f9]"
-                   value={formData().name} onInput={(e) => setFormData({...formData(), name: e.target.value})} />
-               </div>
-               <div class="flex flex-col">
-                 <label class="font-bold uppercase">PRICE</label>
-                 <input type="number" step="0.01" required class="border-2 border-black p-2 bg-[#f9f9f9]"
-                   value={formData().price} onInput={(e) => setFormData({...formData(), price: e.currentTarget.value})} />
-               </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-4xl mx-auto">
+          <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
+            <h3 class="text-xl font-bold text-slate-800">
+              {view() === 'edit' ? 'Edit Product' : 'Create New Product'}
+            </h3>
+            <button 
+              onClick={() => setView('list')}
+              class="text-slate-500 hover:text-slate-800 font-medium text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} class="space-y-8">
+             <div class="grid grid-cols-2 gap-6">
+               <FormInput label="Name" value={formData().name} onInput={(v) => setFormData({...formData(), name: v})} required />
+               <FormInput label="Price ($)" type="number" step="0.01" value={formData().price} onInput={(v) => setFormData({...formData(), price: v})} required />
              </div>
 
-             <div class="grid grid-cols-2 gap-4">
-               <div class="flex flex-col">
-                 <label class="font-bold uppercase">HOW MANY?</label>
-                 <input type="number" step="1" required class="border-2 border-black p-2 bg-[#f9f9f9]"
-                   value={formData().stock} onInput={(e) => setFormData({...formData(), stock: e.currentTarget.value})} />
-               </div>
-               <div class="flex flex-col">
-                 <label class="font-bold uppercase">Product Type</label>
-                 <select required class="border-2 border-black p-2 bg-[#f9f9f9]"
-                   value={formData().categoryId} onChange={(e) => setFormData({...formData(), categoryId: e.target.value }) }>
-                   <option value="">Choose Type...</option>
+             <div class="grid grid-cols-2 gap-6">
+               <FormInput label="Stock" type="number" step="1" value={formData().stock} onInput={(v) => setFormData({...formData(), stock: v})} required />
+               <div class="flex flex-col gap-2">
+                 <label class="text-sm font-medium text-slate-700">Category</label>
+                 <select 
+                   required 
+                   class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                   value={formData().categoryId} 
+                   onChange={(e) => setFormData({...formData(), categoryId: e.target.value }) }
+                 >
+                   <option value="">Select Category</option>
                    <For each={props.categories}>{(cat) => <option value={cat.id}>{cat.name}</option>}</For>
                  </select>
                </div>
              </div>
              
-             <div class="flex flex-col">
-               <label class="font-bold uppercase">SHORT STORY</label>
-               <input class="border-2 border-black p-2 bg-[#f9f9f9]"
-                 value={formData().shortDescription} onInput={(e) => setFormData({...formData(), shortDescription: e.target.value})} />
+             <FormInput label="Short Description" value={formData().shortDescription} onInput={(v) => setFormData({...formData(), shortDescription: v})} />
+             
+             <div class="flex flex-col gap-2">
+               <label class="text-sm font-medium text-slate-700">Description</label>
+               <textarea 
+                 class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow h-32 resize-none"
+                 value={formData().description} 
+                 onInput={(e) => setFormData({...formData(), description: e.target.value})} 
+               />
              </div>
 
-             <div class="flex flex-col">
-               <label class="font-bold uppercase">BIG STORY</label>
-               <textarea class="border-2 border-black p-2 bg-[#f9f9f9] h-24"
-                 value={formData().description} onInput={(e) => setFormData({...formData(), description: e.target.value})} />
+             <div class="flex flex-col gap-2">
+               <label class="text-sm font-medium text-slate-700">Image URLs (one per line)</label>
+               <textarea 
+                 class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow h-32 resize-none font-mono text-xs"
+                 value={formData().images} 
+                 onInput={(e) => setFormData({...formData(), images: e.target.value})} 
+               />
              </div>
 
-             <div class="flex flex-col">
-               <label class="font-bold uppercase">PICTURES (URL PER LINE)</label>
-               <textarea class="border-2 border-black p-2 bg-[#f9f9f9] h-24"
-                 value={formData().images} onInput={(e) => setFormData({...formData(), images: e.target.value})} />
-             </div>
-
-             <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black">
-                <div class="flex flex-col">
-                   <label class="font-bold uppercase mb-2">Artists</label>
-                   <div class="border-2 border-black p-2 max-h-48 overflow-y-auto bg-[#f9f9f9]">
-                      <For each={artists()}>
-                        {(artist) => (
-                           <label class="flex items-center gap-2 p-1 hover:bg-gray-200 cursor-pointer">
-                              <input type="checkbox" 
-                                checked={formData().artistIds.includes(artist.id)}
-                                onChange={() => toggleSelection(artist.id, 'artistIds')}
-                              />
-                              <span class="uppercase font-bold text-sm">{artist.name}</span>
-                           </label>
-                        )}
-                      </For>
-                   </div>
-                </div>
-
-                <div class="flex flex-col">
-                   <label class="font-bold uppercase mb-2">Genres</label>
-                   <div class="border-2 border-black p-2 max-h-48 overflow-y-auto bg-[#f9f9f9]">
-                      <For each={genres()}>
-                        {(genre) => (
-                           <label class="flex items-center gap-2 p-1 hover:bg-gray-200 cursor-pointer">
-                              <input type="checkbox" 
-                                checked={formData().genreIds.includes(genre.id)}
-                                onChange={() => toggleSelection(genre.id, 'genreIds')}
-                              />
-                              <span class="uppercase font-bold text-sm">{genre.name}</span>
-                           </label>
-                        )}
-                      </For>
-                   </div>
-                </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-100">
+                <SelectionGroup 
+                  title="Artists" 
+                  items={artists()} 
+                  selected={formData().artistIds} 
+                  onChange={(id) => toggleSelection(id, 'artistIds')} 
+                />
+                <SelectionGroup 
+                  title="Genres" 
+                  items={genres()} 
+                  selected={formData().genreIds} 
+                  onChange={(id) => toggleSelection(id, 'genreIds')} 
+                />
              </div>
              
-             <button type="submit" class="w-full bg-[var(--retro-green)] font-bold py-4 uppercase border-4 border-black hover:bg-black hover:text-white mt-4">
-               {view() === 'edit' ? 'FIX IT NOW' : 'MAKE IT REAL'}
-             </button>
-        </form>
+             <div class="flex justify-end pt-6 border-t border-slate-100">
+               <button 
+                 type="submit" 
+                 class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+               >
+                 {view() === 'edit' ? 'Save Changes' : 'Create Product'}
+               </button>
+             </div>
+          </form>
+        </div>
       </Show>
     </div>
   );
 }
+
+// --- Category Admin ---
 
 function CategoryAdmin(props) {
   const [newCatName, setNewCatName] = createSignal("");
@@ -320,7 +364,7 @@ function CategoryAdmin(props) {
   };
 
   const handleDeleteCategory = async (id) => {
-    if (!confirm("Delete category? Everything inside will die!")) return;
+    if (!confirm("Delete category? This will affect all associated products.")) return;
     try {
       await api.delete(`categories/${id}`);
       props.onUpdate();
@@ -328,7 +372,7 @@ function CategoryAdmin(props) {
   };
 
   const handleUpdateCategory = async (id, currentName) => {
-    const name = prompt("New name?", currentName);
+    const name = prompt("Enter new category name:", currentName);
     if (!name || name === currentName) return;
     try {
       await api.patch(`categories/${id}`, { json: { name } });
@@ -345,51 +389,120 @@ function CategoryAdmin(props) {
       chain.unshift(parent.name);
       current = parent;
     }
-    return chain.join(" > ");
+    return chain.join(" › ");
   };
 
   return (
-    <div>
-      <div class="flex justify-between items-end mb-8 bg-white border-4 border-black p-4">
-        <h2 class="font-bold uppercase">MAKING GROUPS</h2>
+    <div class="space-y-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Create New Category</h3>
         <form onSubmit={handleCreateCategory} class="flex gap-4 items-end">
-          <div class="flex flex-col">
-            <label class="font-bold uppercase">PARENT</label>
-            <select class="border-2 border-black p-2 bg-[#f9f9f9]"
-              value={parentId()} onChange={(e) => setParentId(e.target.value)}>
-              <option value="">ROOT</option>
+          <div class="flex-1 space-y-2">
+            <label class="text-sm font-medium text-slate-700">Parent Category</label>
+            <select 
+              class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={parentId()} 
+              onChange={(e) => setParentId(e.target.value)}
+            >
+              <option value="">None (Root)</option>
               <For each={props.categories}>{(cat) => <option value={cat.id}>{cat.name}</option>}</For>
             </select>
           </div>
-          <div class="flex flex-col">
-            <label class="font-bold uppercase">NAME</label>
-            <input value={newCatName()} onInput={(e) => setNewCatName(e.target.value)} placeholder="NAME"
-              class="border-2 border-black p-2 bg-[#f9f9f9]" />
+          <div class="flex-1 space-y-2">
+            <label class="text-sm font-medium text-slate-700">Category Name</label>
+            <input 
+              value={newCatName()} 
+              onInput={(e) => setNewCatName(e.target.value)} 
+              placeholder="e.g. Vinyl"
+              class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
-          <button type="submit" class="bg-[var(--retro-green)] px-4 py-2 border-2 border-black font-bold uppercase">CREATE</button>
+          <button 
+            type="submit" 
+            class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
+          >
+            Create
+          </button>
         </form>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <For each={props.categories}>
           {(cat) => (
-            <div class="p-4 border-4 border-black bg-white">
-               <div class="flex justify-between items-start border-b-2 border-black pb-2">
-                 <div class="flex flex-col">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow group">
+               <div class="flex justify-between items-start">
+                 <div class="space-y-1">
                    <Show when={cat.parentId}>
-                     <span class="bg-[var(--retro-yellow)] px-1 border border-black inline-block self-start mb-1 uppercase font-bold">{getBreadcrumbs(cat)}</span>
+                     <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full inline-block">
+                        {getBreadcrumbs(cat)}
+                     </span>
                    </Show>
-                   <div class="flex items-center gap-2">
-                     <h3 class="font-bold uppercase">{cat.name}</h3>
-                     <button onClick={() => handleUpdateCategory(cat.id, cat.name)} class="bg-[var(--retro-blue)] text-white px-2 border border-black font-bold uppercase">FIX</button>
-                   </div>
+                   <h4 class="font-bold text-slate-800">{cat.name}</h4>
                  </div>
-                 <button onClick={() => handleDeleteCategory(cat.id)} class="bg-[var(--retro-red)] text-white px-2 border border-black font-bold uppercase">BYE</button>
+                 <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button onClick={() => handleUpdateCategory(cat.id, cat.name)} class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded">
+                     <Edit2 class="w-4 h-4" />
+                   </button>
+                   <button onClick={() => handleDeleteCategory(cat.id)} class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-50 rounded">
+                     <Trash2 class="w-4 h-4" />
+                   </button>
+                 </div>
                </div>
             </div>
           )}
         </For>
       </div>
+    </div>
+  );
+}
+
+// --- Helpers ---
+
+function FormInput(props) {
+  return (
+    <div class="flex flex-col gap-2">
+       <label class="text-sm font-medium text-slate-700">{props.label}</label>
+       <input 
+         type={props.type || "text"}
+         step={props.step}
+         required={props.required}
+         class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+         value={props.value} 
+         onInput={(e) => props.onInput(e.target.value)} 
+       />
+    </div>
+  );
+}
+
+function SelectionGroup(props) {
+  return (
+    <div class="flex flex-col gap-3">
+       <label class="text-sm font-bold text-slate-800 uppercase tracking-wider">{props.title}</label>
+       <div class="border border-slate-200 rounded-lg max-h-48 overflow-y-auto bg-slate-50 p-2 space-y-1">
+          <For each={props.items}>
+            {(item) => (
+               <label class="flex items-center gap-3 p-2 hover:bg-white hover:shadow-sm rounded-md cursor-pointer transition-all select-none">
+                  <div class={cn(
+                    "w-5 h-5 rounded border flex items-center justify-center transition-colors",
+                    props.selected.includes(item.id) 
+                      ? "bg-indigo-600 border-indigo-600" 
+                      : "bg-white border-slate-300"
+                  )}>
+                    <Show when={props.selected.includes(item.id)}>
+                      <Check class="w-3.5 h-3.5 text-white" />
+                    </Show>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    class="hidden"
+                    checked={props.selected.includes(item.id)}
+                    onChange={() => props.onChange(item.id)}
+                  />
+                  <span class="text-sm font-medium text-slate-700">{item.name}</span>
+               </label>
+            )}
+          </For>
+       </div>
     </div>
   );
 }

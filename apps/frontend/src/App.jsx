@@ -21,18 +21,23 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Router root={Layout}>
-        <Route path="/" component={Shop} />
-        <Route path="/products/:id" component={ProductDetails} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/purchases/success" component={PurchaseSuccess} />
-        <Route path="/purchases/cancel" component={PurchaseCancel} />
+      <Router>
+        {/* Public Shop Routes - Wrapped in Retro Layout */}
+        <Route path="/" component={Layout}>
+          <Route path="/" component={Shop} />
+          <Route path="/products/:id" component={ProductDetails} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/purchases/success" component={PurchaseSuccess} />
+          <Route path="/purchases/cancel" component={PurchaseCancel} />
+          <Route path="*404" component={NotFound} />
+        </Route>
+
+        {/* Admin Route - Separate Modern Layout */}
         <Route path="/admin" component={() => (
           <AdminRoute>
             <Admin />
           </AdminRoute>
         )} />
-        <Route path="*404" component={NotFound} />
       </Router>
     </QueryClientProvider>
   );

@@ -6,7 +6,7 @@ export default function Layout(props) {
   const [isCartOpen, setIsCartOpen] = createSignal(false);
 
   return (
-    <div class="min-h-screen">
+    <div class="min-h-screen retro-theme">
       <Header onCartClick={() => setIsCartOpen(true)} />
 
       <main class="mt-4">

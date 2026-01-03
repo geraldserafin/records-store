@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { PageOptionsDto } from 'src/dto/page-options.dto';
 import { createPage } from 'src/create-page';
@@ -12,6 +12,8 @@ import { z } from 'zod';
 
 import { CategoriesService } from './categories.service';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { Artist } from '../artists/entities/artist.entity';
+import { Genre } from '../genres/entities/genre.entity';
 
 @Injectable()
 export class ProductsService {
@@ -70,13 +72,24 @@ export class ProductsService {
 
       const validatedAttributes = validationResult.data;
 
+      // Fetch Artists and Genres if provided
+      const artists = createProductDto.artistIds
+        ? await manager.findBy(Artist, { id: In(createProductDto.artistIds) })
+        : [];
+      const genres = createProductDto.genreIds
+        ? await manager.findBy(Genre, { id: In(createProductDto.genreIds) })
+        : [];
+
       const product = manager.create(Product, {
         name: createProductDto.name,
         shortDescription: createProductDto.shortDescription,
         description: createProductDto.description,
         price: createProductDto.price,
         images: createProductDto.images,
+        stock: createProductDto.stock,
         category,
+        artists,
+        genres,
       });
 
       const savedProduct = await manager.save(Product, product);
@@ -111,7 +124,9 @@ export class ProductsService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.attributeValues', 'attributeValues')
-      .leftJoinAndSelect('attributeValues.attribute', 'attribute');
+      .leftJoinAndSelect('attributeValues.attribute', 'attribute')
+      .leftJoinAndSelect('product.artists', 'artists')
+      .leftJoinAndSelect('product.genres', 'genres');
 
     if (!pageOptions.filter) {
       return await createPage(queryBuilder, pageOptions);
@@ -159,6 +174,8 @@ export class ProductsService {
         attributeValues: {
           attribute: true,
         },
+        artists: true,
+        genres: true,
       },
     });
 
@@ -166,16 +183,6 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    // 1. Fetch the full schema for this category hierarchy
-    const allAttrDefs = await this.categoriesService.findAllAttributes(product.category.id);
-
-    // 2. Ensure every attribute in the schema has at least a placeholder value object if missing
-    // This allows the frontend to just loop through attributeValues and see EVERYTHING.
-    // However, if we don't want to mutate DB objects, we just return a virtual merged list.
-    
-    // Let's just make sure the frontend knows about the definitions.
-    // Actually, it's better to just ensure the frontend traversal works.
-    
     return product;
   }
 
@@ -183,7 +190,7 @@ export class ProductsService {
     return await this.dataSource.transaction(async (manager) => {
       const product = await manager.findOne(Product, {
         where: { id },
-        relations: { category: true, attributeValues: true },
+        relations: { category: true, attributeValues: true, artists: true, genres: true },
       });
 
       if (!product) {
@@ -209,6 +216,16 @@ export class ProductsService {
             `Category ${updateProductDto.categoryId} not found`,
           );
         product.category = category;
+      }
+
+      // Update Artists if provided
+      if (updateProductDto.artistIds) {
+        product.artists = await manager.findBy(Artist, { id: In(updateProductDto.artistIds) });
+      }
+
+      // Update Genres if provided
+      if (updateProductDto.genreIds) {
+        product.genres = await manager.findBy(Genre, { id: In(updateProductDto.genreIds) });
       }
 
       const savedProduct = await manager.save(Product, product);

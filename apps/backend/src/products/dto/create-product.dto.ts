@@ -35,6 +35,18 @@ export class CreateProductDto {
   @ApiProperty()
   images?: string[];
 
+  @IsArray()
+  @IsInt({ each: true })
+  @IsOptional()
+  @ApiProperty()
+  artistIds?: number[];
+
+  @IsArray()
+  @IsInt({ each: true })
+  @IsOptional()
+  @ApiProperty()
+  genreIds?: number[];
+
   @IsObject()
   @IsOptional()
   @ApiProperty()

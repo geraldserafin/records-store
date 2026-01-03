@@ -10,6 +10,8 @@ import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { ProductsModule } from './products/products.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { EmailsModule } from './emails/emails.module';
+import { ArtistsModule } from './artists/artists.module';
+import { GenresModule } from './genres/genres.module';
 
 @Module({
   providers: [
@@ -27,6 +29,8 @@ import { EmailsModule } from './emails/emails.module';
     ReviewsModule,
     PurchasesModule,
     EmailsModule,
+    ArtistsModule,
+    GenresModule,
   ],
 })
 export class AppModule {}

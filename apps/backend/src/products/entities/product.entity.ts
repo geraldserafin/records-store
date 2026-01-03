@@ -3,12 +3,16 @@ import { Review } from '../../reviews/entities/review.entity';
 import {
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProductCategory } from './product-category.entity';
 import { ProductAttributeValue } from './product-attribute-value.entity';
+import { Artist } from '../../artists/entities/artist.entity';
+import { Genre } from '../../genres/entities/genre.entity';
 
 @Entity({ name: 'products' })
 export class Product {
@@ -38,6 +42,14 @@ export class Product {
     onDelete: 'CASCADE'
   })
   category: ProductCategory;
+
+  @ManyToMany(() => Artist, (artist) => artist.products, { eager: true })
+  @JoinTable({ name: 'product_artists' })
+  artists: Artist[];
+
+  @ManyToMany(() => Genre, (genre) => genre.products, { eager: true })
+  @JoinTable({ name: 'product_genres' })
+  genres: Genre[];
 
   @OneToMany(() => ProductAttributeValue, (value) => value.product, {
     cascade: true,

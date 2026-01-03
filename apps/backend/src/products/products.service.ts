@@ -67,7 +67,7 @@ export class ProductsService {
       return await createPage(queryBuilder, pageOptions);
     }
 
-    const { name, categoryId } = pageOptions.filter;
+    const { name, categoryId, artistId, genreId } = pageOptions.filter;
 
     if (name) {
       queryBuilder.andWhere('product.name LIKE :name', { name: `%${name}%` });
@@ -80,6 +80,14 @@ export class ProductsService {
       } else {
          queryBuilder.andWhere('product.category.id = :categoryId', { categoryId });
       }
+    }
+    
+    if (artistId) {
+        queryBuilder.innerJoin('product.artists', 'filterArtist', 'filterArtist.id = :artistId', { artistId });
+    }
+    
+    if (genreId) {
+        queryBuilder.innerJoin('product.genres', 'filterGenre', 'filterGenre.id = :genreId', { genreId });
     }
 
     return await createPage(queryBuilder, pageOptions);

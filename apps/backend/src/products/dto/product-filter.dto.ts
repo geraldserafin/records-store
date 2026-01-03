@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, IsObject } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -14,8 +14,15 @@ export class ProductFilterDto {
   @ApiPropertyOptional()
   categoryId?: number;
 
-  @IsObject()
+  @IsNumber()
   @IsOptional()
+  @Type(() => Number)
   @ApiPropertyOptional()
-  attributes?: Record<string, any>;
+  artistId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  @ApiPropertyOptional()
+  genreId?: number;
 }

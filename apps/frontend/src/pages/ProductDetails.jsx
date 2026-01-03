@@ -7,63 +7,17 @@ import { cartStore } from "../features/cart/cart.store";
 import { api } from "../lib/api";
 import { cn } from "../lib/utils";
 
-const fetchCategories = async () => await api.get("categories").json();
-
 export default function ProductDetailsPage() {
   const params = useParams();
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = createSignal(0);
 
-  const [categories] = createResource(fetchCategories);
   const query = createQuery(() => ({
     queryKey: ["product", params.id],
     queryFn: () => fetchProductById(params.id),
   }));
 
   const product = () => query.data;
-
-  const groupedAttributes = createMemo(() => {
-    const p = product();
-    const cats = categories();
-    if (!p || !p.category || !cats) return { top: [], bottom: [] };
-
-    const top = [];
-    const bottom = [];
-
-    let currentCat = cats.find((c) => c.id === p.category.id);
-    const visited = new Set();
-
-    while (currentCat && !visited.has(currentCat.id)) {
-      visited.add(currentCat.id);
-
-      (currentCat.attributes || []).forEach((attrDef) => {
-        const val = p.attributeValues?.find((av) => {
-          const avAttrId =
-            av.attribute?.id ||
-            (typeof av.attribute === "number" ? av.attribute : null);
-          return avAttrId === attrDef.id;
-        });
-
-        if (val) {
-          if (attrDef.displaySection === "bottom") {
-            bottom.push(val);
-          } else {
-            top.push(val);
-          }
-        }
-      });
-
-      if (currentCat.parentId) {
-        currentCat = cats.find((c) => c.id === currentCat.parentId);
-      } else {
-        currentCat = null;
-      }
-    }
-
-    return { top, bottom };
-  });
-
-  const getValue = (av) => av.stringValue ?? av.numberValue ?? av.booleanValue;
 
   const handleAddToCart = () => {
     if (product()) {
@@ -99,170 +53,129 @@ export default function ProductDetailsPage() {
   };
 
   return (
-    <div class="w-full">
-      <div class="mb-8">
-        <a
-          href="/"
-          onClick={handleBack}
-          class="inline-flex items-center gap-2 text-xs font-bold uppercase hover:text-gray-500 transition-colors font-mono"
-        >
-          <ArrowLeft size={14} /> Back to Shop
-        </a>
-      </div>
+    <div class="max-w-3xl">
+      <Show when={query.isLoading}>
+        <p class="italic">Loading...</p>
+      </Show>
+      <Show when={query.isError}>
+        <p class="bg-black text-white p-2">Error: {query.error.message}</p>
+      </Show>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border-black">
-        {/* Left: Image Slider (PURE STRUCTURE) */}
-        <div class="bg-white flex items-start justify-center">
-          <div class="w-full aspect-square relative">
-            {/* The Transition Box - matching ProductCard exactly */}
+      <Show when={query.isSuccess}>
+        <div class="space-y-12">
+          <div class="space-y-6">
+            <a
+              href="/"
+              onClick={handleBack}
+              class="text-sm opacity-50 hover:opacity-100 hover:underline"
+            >
+              ← Back to collection
+            </a>
+
+            <div class="space-y-2 mt-8 text-5xl">
+              <h1 class="text-4xl font-black uppercase tracking-tight leading-none">
+                {product().name}
+              </h1>
+              <p class="text-2xl font-bold text-(--accent-color) mt-2">
+                ${Number(product().price).toFixed(0)}.00
+              </p>
+            </div>
+
+            <p class="text-xl leading-relaxed text-gray-800">
+              {product().shortDescription || "No summary available."}
+            </p>
+          </div>
+
+          <div class="space-y-4">
             <div
-              class="w-full h-full overflow-hidden"
+              class="w-full aspect-square bg-white border border-black/5"
               style={{ "view-transition-name": `product-image-${params.id}` }}
             >
               <Show
-                when={query.isSuccess && product()?.images?.length > 0}
+                when={product().images?.length > 0}
                 fallback={
-                  <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-                    <span class="text-[12rem] font-black opacity-10 uppercase select-none">
-                      {query.isSuccess
-                        ? product().category?.name?.substring(0, 2) || "VN"
-                        : "..."}
-                    </span>
+                  <div class="w-full h-full flex items-center justify-center opacity-10 italic">
+                    No image available
                   </div>
                 }
               >
                 <img
                   src={product().images[currentImageIndex()]}
-                  alt={product()?.name}
-                  class="w-full h-full object-cover cursor-pointer"
-                  onClick={nextImage}
+                  alt={product().name}
+                  class="w-full h-full object-contain"
                 />
               </Show>
             </div>
-
-            {/* Non-transitioning UI overlays */}
-            <Show when={query.isSuccess && product()?.images?.length > 1}>
-              <div class="absolute inset-0 z-20 flex items-center justify-between p-4 opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            <Show when={product().images?.length > 1}>
+              <div class="flex gap-4 items-center text-sm">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
-                  class="bg-white/80 p-2 hover:bg-white text-black transition-colors backdrop-blur-sm pointer-events-auto"
+                  onClick={prevImage}
+                  class="bg-gray-100 px-3 py-1 hover:bg-gray-200"
                 >
-                  <ChevronLeft size={24} />
+                  Previous
                 </button>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
-                  class="bg-white/80 p-2 hover:bg-white text-black transition-colors backdrop-blur-sm pointer-events-auto"
+                  onClick={nextImage}
+                  class="bg-gray-100 px-3 py-1 hover:bg-gray-200"
                 >
-                  <ChevronRight size={24} />
+                  Next
                 </button>
-              </div>
-              <div class="absolute bottom-4 right-4 z-20 bg-white/80 px-2 py-1 text-xs font-bold font-mono backdrop-blur-sm text-black">
-                {currentImageIndex() + 1} / {product().images.length}
+                <span class="ml-auto opacity-30 uppercase tracking-widest">
+                  Image {currentImageIndex() + 1} of {product().images.length}
+                </span>
               </div>
             </Show>
-          </div>
-        </div>
-
-        {/* Right: Info */}
-        <div class="flex flex-col justify-between p-8 md:p-12 lg:p-16 font-mono border-l border-black">
-          <Show when={query.isLoading}>
-            <div class="flex h-full items-center justify-center py-20">
-              <Loader2 class="animate-spin text-black" size={32} />
-            </div>
-          </Show>
-
-          <Show when={query.isError}>
-            <div class="text-red-600 uppercase text-xs">
-              Error: {query.error.message}
-            </div>
-          </Show>
-
-          <Show when={query.isSuccess}>
-            <div class="space-y-8">
-              <div class="space-y-2">
-                <span class="text-sm font-bold uppercase text-gray-400 tracking-widest">
-                  {product().category?.name}
+            <div class="flex items-center gap-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={product().stock === 0}
+                class="bg-black text-white px-12 py-4 font-black uppercase tracking-widest hover:bg-[var(--accent-color)] transition-colors"
+              >
+                {product().stock === 0 ? "Out of stock" : "Add to cart"}
+              </button>
+              <Show when={product().stock > 0}>
+                <span class="opacity-30 italic">
+                  ({product().stock} available)
                 </span>
-                <div>
-                  <h1 class="text-5xl font-black uppercase inline [box-decoration-break:clone] [-webkit-box-decoration-break:clone] bg-black text-white">
-                    {product().name}
-                  </h1>
-                </div>
-                <p class="text-2xl font-bold text-black font-mono">
-                  ${Number(product().price).toFixed(2)}
-                </p>
-              </div>
-
-              <div class="text-sm leading-relaxed text-gray-600 max-w-md italic">
-                {product().shortDescription || "Brief overview unavailable."}
-              </div>
-
-              <div class="flex flex-col gap-4 py-6 border-t border-gray-100">
-                <For each={groupedAttributes().top}>
-                  {(av) => (
-                    <div class="flex justify-between items-baseline border-b border-gray-50 pb-1">
-                      <span class="text-[10px] font-bold uppercase text-gray-400">
-                        {av.attribute?.name}
-                      </span>
-                      <span class="text-sm font-bold text-black">
-                        {getValue(av)}
-                      </span>
-                    </div>
-                  )}
-                </For>
-              </div>
+              </Show>
             </div>
+          </div>
 
-            <button
-              onClick={handleAddToCart}
-              disabled={product().stock === 0}
-              class="w-full bg-black text-white py-5 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed mt-8"
-            >
-              {product().stock === 0 ? "Sold Out" : "Add to Cart"}
-            </button>
-          </Show>
-        </div>
-      </div>
-
-      <Show when={query.isSuccess}>
-        <div class="mt-20 border-t border-black pt-12 pb-24 px-8 md:px-12 lg:px-16 font-mono">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
-            <div class="md:col-span-2">
-              <h2 class="text-xs font-bold uppercase tracking-widest text-black mb-8">
-                Detailed Specifications
+          <div class="space-y-12 pt-8 border-t border-black/10">
+            <section>
+              <h2 class="text-sm font-black uppercase tracking-widest border-b border-black mb-6">
+                Description
               </h2>
-              <div class="grid grid-cols-2 gap-x-12 gap-y-6">
-                <For each={groupedAttributes().bottom}>
-                  {(av) => (
-                    <div class="border-b border-gray-100 pb-2">
-                      <span class="block text-[10px] font-bold uppercase text-gray-400 mb-1">
-                        {av.attribute?.name}
-                      </span>
-                      <span class="text-sm font-medium text-black">
-                        {getValue(av)}
-                      </span>
-                    </div>
-                  )}
-                </For>
+              <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">
+                {product().description || "No further details available."}
               </div>
-            </div>
+            </section>
 
-            <div>
-              <h2 class="text-xs font-bold uppercase tracking-widest text-black mb-8">
-                Product Story
+            <section>
+              <h2 class="text-sm font-black uppercase tracking-widest border-b border-black mb-6">
+                Details
               </h2>
-              <div class="text-sm leading-loose text-gray-700">
-                <pre class="text-wrap whitespace-pre-wrap font-mono">
-                  {product().description || "Detailed description unavailable."}
-                </pre>
-              </div>
-            </div>
+              <ul class="list-none p-0 m-0 space-y-3">
+                 <Show when={product().artists?.length > 0}>
+                   <li class="flex justify-between border-b border-black/5 pb-1 text-sm">
+                      <span class="opacity-40 uppercase text-xs font-bold">Artist</span>
+                      <span class="font-bold">{product().artists.map(a => a.name).join(', ')}</span>
+                   </li>
+                 </Show>
+                 <Show when={product().genres?.length > 0}>
+                   <li class="flex justify-between border-b border-black/5 pb-1 text-sm">
+                      <span class="opacity-40 uppercase text-xs font-bold">Genre</span>
+                      <span class="font-bold">{product().genres.map(g => g.name).join(', ')}</span>
+                   </li>
+                 </Show>
+                 <Show when={product().category}>
+                   <li class="flex justify-between border-b border-black/5 pb-1 text-sm">
+                      <span class="opacity-40 uppercase text-xs font-bold">Type</span>
+                      <span class="font-bold">{product().category.name}</span>
+                   </li>
+                 </Show>
+              </ul>
+            </section>
           </div>
         </div>
       </Show>

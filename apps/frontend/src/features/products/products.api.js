@@ -21,13 +21,10 @@ export const fetchProductById = async (id) => {
   return await api.get(`products/${id}`).json();
 };
 
-export const flattenAttributes = (product) => {
-  if (!product?.attributeValues) return {};
-  
-  return product.attributeValues.reduce((acc, av) => {
-    const key = av.attribute.name;
-    const value = av.stringValue ?? av.numberValue ?? av.booleanValue;
-    acc[key] = value;
-    return acc;
-  }, {});
+export const fetchArtists = async () => {
+  return await api.get('artists').json();
+};
+
+export const fetchGenres = async () => {
+  return await api.get('genres').json();
 };

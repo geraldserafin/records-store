@@ -17,10 +17,9 @@ export default function UserMenu() {
   return (
     <button
       onClick={handleClick}
-      class="text-black hover:text-gray-600 transition-colors p-2"
-      title={authStore.state.user ? "Account" : "Login"}
+      class="p-0 bg-transparent text-blue-700 underline hover:text-black transition-colors"
     >
-      <User size={20} />
+      {authStore.state.user ? "Profile" : "Sign in"}
     </button>
   );
 }

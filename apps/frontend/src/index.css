@@ -1,21 +1,99 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-color: #e0e0e0;
+    --surface-color: #ffffff;
+    --text-color: #000000;
+    --link-color: #0000ee;
+    --accent-color: #ff00ff;
+    --font-size: 15px;
+  }
+
+  * {
+    /* Absolute uniformity as requested */
+    font-size: var(--font-size) !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: normal !important;
+    line-height: 1.2 !important;
+    border-radius: 0 !important;
+  }
+
   body {
-    font-family: monospace;
-    scrollbar-gutter: stable;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+  }
+
+  a {
+    color: var(--link-color);
+    text-decoration: underline;
+  }
+
+  button {
+    background: #ccc;
+    color: black;
+    padding: 2px 8px !important;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--accent-color);
+    color: white;
+  }
+
+  button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  input,
+  select,
+  textarea {
+    background: white;
+    padding: 2px 4px !important;
   }
 }
 
+/* Laggy View Transitions (12 steps) */
 ::view-transition-old(*),
 ::view-transition-new(*) {
-  /* Ensure snapshots cover the entire box without gaps */
+  animation-duration: 0.4s;
+  animation-timing-function: steps(8);
+  mix-blend-mode: normal;
   height: 100%;
   width: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 ::view-transition-group(*) {
-  /* Use a consistent duration for all morphs */
-  animation-duration: 0.3s;
+  animation-duration: 0.4s;
+  animation-timing-function: steps(8);
+}
+
+/* Laggy View Transitions (~8 frames at 0.5s) */
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.5s;
+  animation-timing-function: steps(8);
+  mix-blend-mode: normal;
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+::view-transition-group(*) {
+  animation-duration: 0.5s;
+  animation-timing-function: steps(8);
+}
+
+.input {
+  background-color: white;
+  border-bottom: 1px;
+  padding-left: 2px;
+  padding-right: 2px;
+  outline: none;
 }

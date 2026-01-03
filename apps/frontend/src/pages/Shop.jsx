@@ -60,21 +60,21 @@ export default function Shop() {
   });
 
   return (
-    <div class="w-full font-mono">
+    <div class="w-full">
       <Show when={query.isLoading && !query.data}>
-        <div class="flex h-64 w-full items-center justify-center">
-          <span class="text-xs font-bold uppercase tracking-widest animate-pulse">Scanning inventory...</span>
+        <div class="py-8 text-gray-400 font-bold">
+          Loading collection...
         </div>
       </Show>
 
       <Show when={query.isError}>
-        <div class="border border-red-500 p-4 text-red-500 text-xs uppercase mb-8">
-          Error: {query.error?.message || "Unknown retrieval error"}
+        <div class="bg-black text-white p-4 mb-8">
+          Status: Critical Error ({query.error?.message})
         </div>
       </Show>
 
       <Show when={query.data}>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           <For each={query.data.pages}>
             {(page) => (
               <For each={page.items}>
@@ -85,14 +85,14 @@ export default function Shop() {
         </div>
         
         <Show when={query.data.pages[0]?.items?.length === 0}>
-          <div class="py-24 text-center">
-            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">No matching units found.</p>
+          <div class="py-12 text-center opacity-30 italic">
+            Search returned no results.
           </div>
         </Show>
 
-        <div ref={setLoadMoreRef} class="h-24 w-full flex items-center justify-center mt-12">
+        <div ref={setLoadMoreRef} class="h-24 w-full flex items-center justify-center mt-12 border-t border-black/5">
           <Show when={query.isFetchingNextPage}>
-            <span class="text-xs font-bold uppercase tracking-widest animate-pulse">Retrieving more data...</span>
+            <span class="font-bold animate-pulse">Requesting more units...</span>
           </Show>
         </div>
       </Show>

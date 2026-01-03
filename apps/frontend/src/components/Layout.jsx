@@ -6,10 +6,10 @@ export default function Layout(props) {
   const [isCartOpen, setIsCartOpen] = createSignal(false);
 
   return (
-    <div class="min-h-screen bg-white text-black font-mono antialiased selection:bg-black selection:text-white">
+    <div class="min-h-screen">
       <Header onCartClick={() => setIsCartOpen(true)} />
 
-      <main class="container mx-auto py-12 px-4">
+      <main class="mt-4">
         {props.children}
       </main>
 

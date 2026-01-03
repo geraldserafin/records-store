@@ -5,17 +5,10 @@ import { ShoppingBag } from "lucide-solid";
 export default function CartButton(props) {
   return (
     <button 
-      class="relative p-2 text-black hover:text-gray-600 transition-colors"
+      class="p-0 bg-transparent text-blue-700 underline hover:text-black transition-colors"
       onClick={props.onClick}
     >
-      <div class="flex items-center gap-1">
-        <ShoppingBag size={20} />
-        <Show when={cartStore.count > 0}>
-          <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white">
-            {cartStore.count}
-          </span>
-        </Show>
-      </div>
+      Shopping cart {cartStore.count > 0 && `(${cartStore.count})`}
     </button>
   );
 }

@@ -1,5 +1,5 @@
 import { authStore } from "../features/auth/auth.store";
-import { Show } from "solid-js";
+import { Show, For } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 
 export default function Profile() {
@@ -13,76 +13,63 @@ export default function Profile() {
   };
 
   return (
-    <div class="max-w-4xl mx-auto py-8">
+    <div class="max-w-2xl space-y-12 font-sans">
       <Show
         when={authStore.state.user}
         fallback={
-          <div class="text-center py-32 border border-black border-dashed font-mono">
-            <p class="text-gray-500 mb-6 text-sm uppercase">
-              Access Restricted
-            </p>
+          <div class="py-8">
+            <p class="opacity-30 mb-4">Identity record missing.</p>
             <button
               onClick={authStore.login}
-              class="bg-black text-white px-8 py-4 text-sm font-bold uppercase hover:bg-gray-800 transition-colors"
+              class="bg-black text-white px-4 py-1 font-bold"
             >
-              Login
+              Access system
             </button>
           </div>
         }
       >
         <div class="space-y-12">
-          {/* Compact User Header */}
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-6">
-              <div class="w-16 h-16 border border-black bg-gray-100 overflow-hidden shrink-0">
-                <Show
-                  when={authStore.state.user.photoUrl}
-                  fallback={<div class="w-full h-full bg-black" />}
-                >
-                  <img
-                    src={authStore.state.user.photoUrl}
-                    alt="Profile"
-                    class="w-full h-full object-cover"
-                  />
-                </Show>
-              </div>
-              <div>
-                <h1 class="text-lg font-bold uppercase font-mono leading-none mb-1">
+          <div class="space-y-4">
+            <h1 class="font-bold text-lg border-b border-black">
+              Profile record
+            </h1>
+
+            <div class="space-y-6">
+              <Show when={authStore.state.user.photoUrl}>
+                <img
+                  src={authStore.state.user.photoUrl}
+                  class="w-24 h-24 bg-gray-200"
+                />
+              </Show>
+
+              <ul class="list-none p-0 m-0 space-y-1 text-sm">
+                <li>
+                  <span class="opacity-40">User:</span>{" "}
                   {authStore.state.user.firstName}{" "}
                   {authStore.state.user.lastName}
-                </h1>
-                <p class="text-xs font-mono text-gray-500 uppercase">
+                </li>
+                <li>
+                  <span class="opacity-40">Mail:</span>{" "}
                   {authStore.state.user.email}
-                </p>
-              </div>
+                </li>
+                <li>
+                  <span class="opacity-40">Rank:</span>{" "}
+                  {authStore.state.user.role || "Member"}
+                </li>
+                <li class="pt-4">
+                  <button onClick={handleLogout} class="text-red-600 underline">
+                    Log Out➾
+                  </button>
+                </li>
+              </ul>
             </div>
-
-            <button
-              onClick={handleLogout}
-              class="text-[10px] font-bold uppercase tracking-widest border border-black px-4 py-2 hover:bg-black hover:text-white transition-all font-mono"
-            >
-              Logout
-            </button>
           </div>
 
-          {/* Order History (Main Focus) */}
-          <div class="space-y-6">
-            <div class="flex items-baseline justify-between border-b border-black pb-2">
-              <h2 class="text-xs font-bold uppercase font-mono tracking-widest text-black">
-                Order History
-              </h2>
-              <span class="text-[10px] font-mono text-gray-400 uppercase">
-                Archive
-              </span>
-            </div>
-
-            <div class="min-h-[400px]">
-              {/* Placeholder for orders list */}
-              <div class="border border-gray-100 p-12 text-center">
-                <p class="text-gray-400 font-mono text-xs uppercase tracking-widest">
-                  No transaction history found.
-                </p>
-              </div>
+          {/* HISTORY */}
+          <div class="space-y-4">
+            <h2 class="font-bold border-b border-black">Historical data</h2>
+            <div class="text-gray-500 italic">
+              No purchase logs encountered.
             </div>
           </div>
         </div>

@@ -30,6 +30,22 @@ export class UserDto {
 
   @Expose()
   @ApiProperty()
+  shippingAddress?: string;
+
+  @Expose()
+  @ApiProperty()
+  shippingCity?: string;
+
+  @Expose()
+  @ApiProperty()
+  shippingPostalCode?: string;
+
+  @Expose()
+  @ApiProperty()
+  shippingCountry?: string;
+
+  @Expose()
+  @ApiProperty()
   role: string;
 
   constructor(partial: Partial<UserDto>) {

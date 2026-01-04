@@ -2,8 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Genre } from './entities/genre.entity';
-import { CreateGenreDto } from './dto/create-genre.dto';
-import { UpdateGenreDto } from './dto/update-genre.dto';
+import { CreateGenreDto, UpdateGenreDto } from './dto/genre.schema';
 
 @Injectable()
 export class GenresService {
@@ -12,8 +11,8 @@ export class GenresService {
     private readonly genreRepository: Repository<Genre>,
   ) {}
 
-  async create(createGenreDto: CreateGenreDto): Promise<Genre> {
-    const genre = this.genreRepository.create(createGenreDto);
+  async create(dto: CreateGenreDto): Promise<Genre> {
+    const genre = this.genreRepository.create(dto);
     return await this.genreRepository.save(genre);
   }
 
@@ -24,7 +23,7 @@ export class GenresService {
   async findOne(id: number): Promise<Genre> {
     const genre = await this.genreRepository.findOne({
       where: { id },
-      relations: ['products'],
+      relations: ['records'],
     });
     if (!genre) {
       throw new NotFoundException(`Genre with ID ${id} not found`);
@@ -32,9 +31,20 @@ export class GenresService {
     return genre;
   }
 
-  async update(id: number, updateGenreDto: UpdateGenreDto): Promise<Genre> {
+  async findBySlug(slug: string): Promise<Genre> {
+    const genre = await this.genreRepository.findOne({
+      where: { slug },
+      relations: ['records'],
+    });
+    if (!genre) {
+      throw new NotFoundException(`Genre with slug ${slug} not found`);
+    }
+    return genre;
+  }
+
+  async update(id: number, dto: UpdateGenreDto): Promise<Genre> {
     const genre = await this.findOne(id);
-    Object.assign(genre, updateGenreDto);
+    Object.assign(genre, dto);
     return await this.genreRepository.save(genre);
   }
 

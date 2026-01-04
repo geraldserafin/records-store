@@ -1,12 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { Product } from './products/entities/product.entity';
+import { Record } from './records/entities/record.entity';
 import { DataSource } from 'typeorm';
 import databaseConfig from './config/database.config';
 import { Review } from './reviews/entities/review.entity';
 import { User } from './users/entities/user.entity';
 import { Order } from './purchases/entities/order.entity';
 import { OrderItem } from './purchases/entities/order-item.entity';
-import { ProductCategory } from './products/entities/product-category.entity';
 import { Artist } from './artists/entities/artist.entity';
 import { Genre } from './genres/entities/genre.entity';
 import * as config from 'dotenv';
@@ -25,7 +24,7 @@ async function seed() {
     host: socketPath ? undefined : (process.env.DB_HOSTNAME || "localhost"),
     port: socketPath ? undefined : (parseInt(process.env.DB_PORT) || 3306),
     socketPath: socketPath,
-    entities: [Product, Review, User, Order, OrderItem, ProductCategory, Artist, Genre],
+    entities: [Record, Review, User, Order, OrderItem, Artist, Genre],
     synchronize: true, 
   };
 
@@ -37,29 +36,57 @@ async function seed() {
     
     console.log('Connected to database (Schema Dropped & Synced)');
 
-    const categoryRepo = dataSource.getRepository(ProductCategory);
-    const productRepo = dataSource.getRepository(Product);
+    const recordRepo = dataSource.getRepository(Record);
     const reviewRepo = dataSource.getRepository(Review);
+    const artistRepo = dataSource.getRepository(Artist);
+    const genreRepo = dataSource.getRepository(Genre);
 
-    // 1. Setup Vinyl Category
-    console.log('Creating Vinyl Category...');
-    const vinylCat = await categoryRepo.save(categoryRepo.create({ name: 'Vinyl' }));
+    // 1. Seed Artists
+    console.log('Seeding Artists...');
+    const artists = [];
+    for (let i = 0; i < 20; i++) {
+      const name = faker.person.fullName();
+      const artist = await artistRepo.save(artistRepo.create({
+        name,
+        slug: faker.helpers.slugify(name).toLowerCase() + '-' + faker.string.alphanumeric(5),
+        bio: faker.lorem.paragraph(),
+        image: faker.image.avatar(),
+      }));
+      artists.push(artist);
+    }
 
+    // 2. Seed Genres
+    console.log('Seeding Genres...');
+    const genres = [];
+    const genreNames = ['Rock', 'Jazz', 'Hip Hop', 'Electronic', 'Classical', 'Pop', 'Blues', 'Country'];
+    for (const name of genreNames) {
+      const genre = await genreRepo.save(genreRepo.create({
+        name,
+        slug: name.toLowerCase(),
+        description: faker.lorem.sentence(),
+      }));
+      genres.push(genre);
+    }
     
-    // 2. Seed Products
-    console.log('Seeding Products...');
+    // 3. Seed Records
+    console.log('Seeding Records...');
     for (let i = 0; i < 50; i++) {
-      const product = await productRepo.save(productRepo.create({
+      const mainArtist = faker.helpers.arrayElement(artists);
+      const coArtists = faker.helpers.arrayElements(artists.filter(a => a.id !== mainArtist.id), { min: 0, max: 2 });
+      const recordGenres = faker.helpers.arrayElements(genres, { min: 1, max: 3 });
+
+      const record = await recordRepo.save(recordRepo.create({
         name: faker.music.album(),
         description: faker.lorem.paragraph(),
+        shortDescription: faker.lorem.sentence(),
         price: parseFloat(faker.commerce.price()),
         images: [
           faker.image.urlLoremFlickr({ category: 'abstract' }),
-          faker.image.urlLoremFlickr({ category: 'technics' }),
-          faker.image.urlLoremFlickr({ category: 'business' }),
         ],
-        category: vinylCat,
         stock: faker.number.int({ min: 0, max: 100 }),
+        mainArtist,
+        coArtists,
+        genres: recordGenres,
       }));
 
       // Create Reviews
@@ -68,7 +95,7 @@ async function seed() {
         await reviewRepo.save(reviewRepo.create({
           score: faker.number.int({ min: 1, max: 10 }),
           description: faker.lorem.sentence(),
-          product: product,
+          record: record,
         }));
       }
     }

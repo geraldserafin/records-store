@@ -3,10 +3,10 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { createPage } from 'src/create-page';
+import { User } from '../users/entities/user.entity';
+import { createPage } from '../create-page';
 import { ReviewPageDto } from './dto/review-page.dto';
-import { Product } from '../products/entities/product.entity';
+import { Record } from '../records/entities/record.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -15,19 +15,19 @@ export class ReviewsService {
     private readonly reviewsRepository: Repository<Review>,
   ) {}
 
-  create(productId: number, userId: number, createReviewDto: CreateReviewDto) {
-    const vinyl = this.reviewsRepository.create(createReviewDto);
+  create(recordId: number, userId: number, createReviewDto: CreateReviewDto) {
+    const review = this.reviewsRepository.create(createReviewDto);
 
-    vinyl.author = { id: userId } as User;
-    vinyl.product = { id: productId } as Product;
+    review.author = { id: userId } as User;
+    review.record = { id: recordId } as Record;
 
-    return this.reviewsRepository.save(vinyl);
+    return this.reviewsRepository.save(review);
   }
 
-  findAll(productId: number, reviewsPageDto: ReviewPageDto) {
+  findAll(recordId: number, reviewsPageDto: ReviewPageDto) {
     const queryBuilder = this.reviewsRepository
-      .createQueryBuilder()
-      .where(`productId = :productId`, { productId });
+      .createQueryBuilder('review')
+      .where(`review.recordId = :recordId`, { recordId });
 
     return createPage(queryBuilder, reviewsPageDto);
   }

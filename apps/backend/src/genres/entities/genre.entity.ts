@@ -4,7 +4,7 @@ import {
   ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Product } from '../../products/entities/product.entity';
+import { Record } from '../../records/entities/record.entity';
 
 @Entity({ name: 'genres' })
 export class Genre {
@@ -20,6 +20,6 @@ export class Genre {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @ManyToMany(() => Product, (product) => product.genres)
-  products: Product[];
+  @ManyToMany(() => Record, (record) => record.genres)
+  records: Record[];
 }

@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Order } from './order.entity';
-import { Product } from '../../products/entities/product.entity';
+import { Record } from '../../records/entities/record.entity';
 
 @Entity({ name: 'order_items' })
 export class OrderItem {
@@ -10,8 +10,8 @@ export class OrderItem {
   @ManyToOne(() => Order, (order) => order.items)
   order: Order;
 
-  @ManyToOne(() => Product, { nullable: true, onDelete: 'SET NULL' })
-  product: Product;
+  @ManyToOne(() => Record, { nullable: true, onDelete: 'SET NULL' })
+  record: Record;
 
   @Column({ type: 'int' })
   quantity: number;

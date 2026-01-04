@@ -1,90 +1,24 @@
-@import "tailwindcss";
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
 
 @layer base {
   :root {
-    --bg-color: #e0e0e0;
-    --surface-color: #ffffff;
-    --text-color: #000000;
-    --link-color: #0000ee;
-    --accent-color: #ff00ff;
-    --font-size: 15px;
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    background-color: #e5e5e5;
   }
 
-  /* SCOPED RETRO THEME */
-  .retro-theme {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    min-height: 100vh;
-    padding: 20px;
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+    margin: 0;
   }
 
-  .retro-theme * {
-    /* Absolute uniformity as requested */
-    font-size: var(--font-size) !important;
-    font-family: Arial, Helvetica, sans-serif !important;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-    font-weight: normal !important;
-    line-height: 1.2 !important;
-    border-radius: 0 !important;
-  }
-
-  .retro-theme a {
-    color: var(--link-color);
-    text-decoration: underline;
-  }
-
-  .retro-theme button {
-    background: #ccc;
-    color: black;
-    padding: 2px 8px !important;
-    cursor: pointer;
-  }
-
-  .retro-theme button:hover {
-    background: var(--accent-color);
-    color: white;
-  }
-
-  .retro-theme button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  .retro-theme input,
-  .retro-theme select,
-  .retro-theme textarea {
-    background: white;
-    padding: 2px 4px !important;
-  }
-
-  .retro-theme .input {
-    background-color: white;
-    border-bottom: 1px;
-    padding-left: 2px;
-    padding-right: 2px;
-    outline: none;
+  ul {
+    margin: 0;
   }
 }
 
-/* ADMIN THEME BASE */
-.admin-theme {
-  @apply bg-slate-50 text-slate-900 font-sans antialiased;
-  min-height: 100vh;
-}
-
-/* Laggy View Transitions (Scope to retro if possible, but global is safer for now to avoid breaking shop) */
-::view-transition-old(*),
-::view-transition-new(*) {
-  animation-duration: 0.4s;
-  animation-timing-function: steps(8);
-  mix-blend-mode: normal;
-  height: 100%;
-  width: 100%;
-  object-fit: contain;
-}
-
-::view-transition-group(*) {
-  animation-duration: 0.4s;
-  animation-timing-function: steps(8);
+a {
+  color: blue;
 }

@@ -36,15 +36,10 @@ export async function createPage<T>(
     });
   }
 
-  if (pageOptions.sort) {
-    Object.entries(pageOptions.sort).forEach(([field, dir], index) => {
+  if (pageOptions.sort && typeof pageOptions.sort === 'object') {
+    Object.entries(pageOptions.sort).forEach(([field, dir]) => {
       const direction = (dir as string).toUpperCase() as 'ASC' | 'DESC';
       const path = relationMappings[field] || `${alias}.${field}`;
-
-      if (index === 0) {
-        queryBuilder.orderBy(path, direction);
-        return;
-      }
 
       queryBuilder.addOrderBy(path, direction);
     });

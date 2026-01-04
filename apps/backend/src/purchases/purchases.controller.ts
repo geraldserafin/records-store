@@ -1,28 +1,30 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
+  Param,
   Post,
   RawBody,
-  UseGuards,
   Req,
+  UsePipes,
 } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
-import { Public } from 'src/auth/decorators/access.decorator';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { EmailsService } from 'src/emails/emails.service';
+import { Public } from '../auth/decorators/access.decorator';
+import { CreateOrderSchema, CreateOrderDto } from './dto/order.schema';
 import { ApiOperation } from '@nestjs/swagger';
 import { Request } from 'express';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller('purchases')
 export class PurchasesController {
   constructor(
     private readonly purchasesService: PurchasesService,
-    private readonly emailsService: EmailsService,
   ) {}
 
   @Public() // Allow guests
   @Post()
+  @UsePipes(new ZodValidationPipe(CreateOrderSchema))
   @ApiOperation({
     summary:
       'Create a new order and returns the stripe page url to complete it',
@@ -35,6 +37,26 @@ export class PurchasesController {
     return this.purchasesService.create(createOrderDto, user);
   }
 
+  @Get('orders')
+  @ApiOperation({ summary: 'Get all orders for the current user' })
+  findAll(@Req() request: Request) {
+    const user = (request as any).user;
+    return this.purchasesService.findAllByUser(user.id);
+  }
+
+  @Get('orders/:id')
+  @ApiOperation({ summary: 'Get order details' })
+  findOne(@Param('id') id: string) {
+    return this.purchasesService.findOne(+id);
+  }
+
+  @Public()
+  @Get('verify/:sessionId')
+  @ApiOperation({ summary: 'Verify a stripe session and create order if needed' })
+  verify(@Param('sessionId') sessionId: string) {
+    return this.purchasesService.verifySession(sessionId);
+  }
+
   @Public()
   @Post('webhook')
   @ApiOperation({
@@ -44,13 +66,10 @@ export class PurchasesController {
     @Headers('stripe-signature') signature: string,
     @RawBody() rawBody: Buffer,
   ) {
-    const result = await this.purchasesService.handleWebhook(
+    await this.purchasesService.handleWebhook(
       signature,
       rawBody,
     );
-
-    // Email notification logic might need updates if we have guest emails
-    // For now simple pass.
     
     return { received: true };
   }

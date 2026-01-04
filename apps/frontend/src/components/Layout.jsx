@@ -1,21 +1,12 @@
-import Header from "./Header";
-import CartDrawer from "../features/cart/CartDrawer";
-import { Show, createSignal } from "solid-js";
+import Sidebar from "./Sidebar";
 
 export default function Layout(props) {
-  const [isCartOpen, setIsCartOpen] = createSignal(false);
-
   return (
-    <div class="min-h-screen retro-theme">
-      <Header onCartClick={() => setIsCartOpen(true)} />
-
-      <main class="mt-4">
-        {props.children}
-      </main>
-
-      <Show when={isCartOpen()}>
-        <CartDrawer onClose={() => setIsCartOpen(false)} />
-      </Show>
+    <div class="container mx-auto flex items-start">
+      <aside class="border sticky top-8 flex flex-col gap-4">
+        <Sidebar />
+      </aside>
+      <main class="border bg-white -ml-px">{props.children}</main>
     </div>
   );
 }

@@ -33,4 +33,24 @@ export class UpdateUserDto {
   @IsOptional()
   @ApiProperty()
   birthDate?: Date;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty()
+  shippingAddress?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty()
+  shippingCity?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty()
+  shippingPostalCode?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty()
+  shippingCountry?: string;
 }

@@ -37,6 +37,18 @@ export class User {
   @Column({ name: 'birth_date', type: 'datetime', nullable: true })
   birthDate: Date;
 
+  @Column({ name: 'shipping_address', nullable: true })
+  shippingAddress: string;
+
+  @Column({ name: 'shipping_city', nullable: true })
+  shippingCity: string;
+
+  @Column({ name: 'shipping_postal_code', nullable: true })
+  shippingPostalCode: string;
+
+  @Column({ name: 'shipping_country', nullable: true })
+  shippingCountry: string;
+
   @OneToMany(() => Review, (review) => review.author)
   reviews: Review[];
 

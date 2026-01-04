@@ -3,10 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Product } from '../../products/entities/product.entity';
+import { Record } from '../../records/entities/record.entity';
 
 @Entity({ name: 'artists' })
 export class Artist {
@@ -16,14 +17,20 @@ export class Artist {
   @Column()
   name: string;
 
+  @Column({ unique: true })
+  slug: string;
+
   @Column({ type: 'text', nullable: true })
   bio: string;
 
   @Column({ nullable: true })
   image: string;
 
-  @ManyToMany(() => Product, (product) => product.artists)
-  products: Product[];
+  @OneToMany(() => Record, (record) => record.mainArtist)
+  mainRecords: Record[];
+
+  @ManyToMany(() => Record, (record) => record.coArtists)
+  coRecords: Record[];
 
   @CreateDateColumn()
   createdAt: Date;

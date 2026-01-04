@@ -1,8 +1,8 @@
 import { IsInt, IsOptional, Min } from 'class-validator';
-import { PageOptionsDto } from 'src/dto/page-options.dto';
+import { PageOptionsDto } from '../../dto/page-options.dto';
 import { Type } from 'class-transformer';
 
-export class ReviewPageDto implements PageOptionsDto {
+export class ReviewPageDto extends PageOptionsDto {
   @IsInt()
   @Min(1)
   @IsOptional()

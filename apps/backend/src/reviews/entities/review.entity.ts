@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Product } from '../../products/entities/product.entity';
+import { Record } from '../../records/entities/record.entity';
 import { User } from '../../users/entities/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -17,9 +17,9 @@ export class Review {
   @ApiProperty()
   description: string;
 
-  @ManyToOne(() => Product, (product) => product.reviews, { onDelete: 'CASCADE' })
-  @ApiProperty({ type: () => Product })
-  product: Product;
+  @ManyToOne(() => Record, (record) => record.reviews, { onDelete: 'CASCADE' })
+  @ApiProperty({ type: () => Record })
+  record: Record;
 
   @ManyToOne(() => User, (user) => user.reviews, { onDelete: 'SET NULL' })
   @ApiProperty({ type: () => User })

@@ -1,19 +1,22 @@
 import { Body, Controller, Delete, Get, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { Public } from '../auth/decorators/access.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Public()
   @Get('me')
   @ApiOperation({ summary: "Return the authenticated user's profile" })
   @ApiOkResponse({ type: () => UserDto })
   async me(@CurrentUser() user: User) {
+    if (!user) return null;
     return UserDto.toInstance(user);
   }
 

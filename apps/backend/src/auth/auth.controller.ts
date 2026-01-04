@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
 import { Public } from './decorators/access.decorator';
-import appConfig from 'src/config/app.config';
+import appConfig from '../config/app.config';
 import { ConfigType } from '@nestjs/config';
 import { ApiOkResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -36,13 +36,15 @@ export class AuthController {
   @ApiOperation({ summary: 'Handle Google OAuth callback' })
   @ApiOkResponse({ description: 'Successfully authenticated with Google' })
   async googleAuthCallback() {
-    return { url: `${this.configService.appUrl}/profile` };
+    return { url: this.configService.appUrl };
   }
 
+  @Public()
   @Get('logout')
   @ApiOperation({ summary: 'Logout user' })
   @ApiOkResponse({ description: 'Successfully logged out' })
   logout(@Req() req: any) {
     req.session.destroy();
+    return { url: this.configService.appUrl };
   }
 }

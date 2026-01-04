@@ -2,8 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Artist } from './entities/artist.entity';
-import { CreateArtistDto } from './dto/create-artist.dto';
-import { UpdateArtistDto } from './dto/update-artist.dto';
+import { CreateArtistDto, UpdateArtistDto } from './dto/artist.schema';
 
 @Injectable()
 export class ArtistsService {
@@ -12,8 +11,8 @@ export class ArtistsService {
     private readonly artistRepository: Repository<Artist>,
   ) {}
 
-  async create(createArtistDto: CreateArtistDto): Promise<Artist> {
-    const artist = this.artistRepository.create(createArtistDto);
+  async create(dto: CreateArtistDto): Promise<Artist> {
+    const artist = this.artistRepository.create(dto);
     return await this.artistRepository.save(artist);
   }
 
@@ -24,7 +23,7 @@ export class ArtistsService {
   async findOne(id: number): Promise<Artist> {
     const artist = await this.artistRepository.findOne({
       where: { id },
-      relations: ['products'],
+      relations: ['mainRecords', 'coRecords'],
     });
     if (!artist) {
       throw new NotFoundException(`Artist with ID ${id} not found`);
@@ -32,9 +31,20 @@ export class ArtistsService {
     return artist;
   }
 
-  async update(id: number, updateArtistDto: UpdateArtistDto): Promise<Artist> {
+  async findBySlug(slug: string): Promise<Artist> {
+    const artist = await this.artistRepository.findOne({
+      where: { slug },
+      relations: ['mainRecords', 'coRecords'],
+    });
+    if (!artist) {
+      throw new NotFoundException(`Artist with slug ${slug} not found`);
+    }
+    return artist;
+  }
+
+  async update(id: number, dto: UpdateArtistDto): Promise<Artist> {
     const artist = await this.findOne(id);
-    Object.assign(artist, updateArtistDto);
+    Object.assign(artist, dto);
     return await this.artistRepository.save(artist);
   }
 

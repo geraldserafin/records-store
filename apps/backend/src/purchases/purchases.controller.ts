@@ -10,7 +10,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
-import { Public } from '../auth/decorators/access.decorator';
+import { Public, Admin } from '../auth/decorators/access.decorator';
 import { CreateOrderSchema, CreateOrderDto } from './dto/order.schema';
 import { ApiOperation } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -21,6 +21,13 @@ export class PurchasesController {
   constructor(
     private readonly purchasesService: PurchasesService,
   ) {}
+
+  @Admin()
+  @Get('stats')
+  @ApiOperation({ summary: 'Get purchase statistics' })
+  getStats() {
+    return this.purchasesService.getStats();
+  }
 
   @Public() // Allow guests
   @Post()
@@ -48,6 +55,13 @@ export class PurchasesController {
   @ApiOperation({ summary: 'Get order details' })
   findOne(@Param('id') id: string) {
     return this.purchasesService.findOne(+id);
+  }
+
+  @Public()
+  @Get('collection/:userId')
+  @ApiOperation({ summary: 'Get a user collection' })
+  findCollection(@Param('userId') userId: string) {
+    return this.purchasesService.findCollectionByUser(+userId);
   }
 
   @Public()

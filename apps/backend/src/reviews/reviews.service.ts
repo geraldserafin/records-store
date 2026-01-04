@@ -15,19 +15,34 @@ export class ReviewsService {
     private readonly reviewsRepository: Repository<Review>,
   ) {}
 
-  create(recordId: number, userId: number, createReviewDto: CreateReviewDto) {
+  create(userId: number, createReviewDto: CreateReviewDto) {
     const review = this.reviewsRepository.create(createReviewDto);
 
     review.author = { id: userId } as User;
-    review.record = { id: recordId } as Record;
+    review.record = { id: createReviewDto.recordId } as Record;
 
     return this.reviewsRepository.save(review);
   }
 
-  findAll(recordId: number, reviewsPageDto: ReviewPageDto) {
+  findAll(reviewsPageDto: ReviewPageDto) {
     const queryBuilder = this.reviewsRepository
       .createQueryBuilder('review')
-      .where(`review.recordId = :recordId`, { recordId });
+      .leftJoinAndSelect('review.author', 'author')
+      .leftJoinAndSelect('review.record', 'record')
+      .leftJoinAndSelect('record.mainArtist', 'mainArtist') // For record display in user profile
+      .orderBy('review.id', 'DESC');
+
+    if (reviewsPageDto.recordId) {
+      queryBuilder.andWhere('review.recordId = :recordId', {
+        recordId: reviewsPageDto.recordId,
+      });
+    }
+
+    if (reviewsPageDto.userId) {
+      queryBuilder.andWhere('review.authorId = :userId', {
+        userId: reviewsPageDto.userId,
+      });
+    }
 
     return createPage(queryBuilder, reviewsPageDto);
   }

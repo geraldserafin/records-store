@@ -2,14 +2,13 @@ import { createResource, createSignal, Show } from "solid-js";
 import RecordGrid from "../components/RecordGrid";
 import { fetchRecords } from "../lib/records";
 
-export default function Shop(props) {
+export default function GenrePage(props) {
   const [page, setPage] = createSignal(1);
   
   const [data] = createResource(
     () => ({
       page: page(),
-      section: props.params.section,
-      q: props.location.query.q,
+      genre: props.params.genre,
     }),
     fetchRecords
   );

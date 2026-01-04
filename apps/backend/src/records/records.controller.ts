@@ -33,13 +33,20 @@ export class RecordsController {
   findAll(
     @Query(new ZodValidationPipe(RecordFilterSchema)) filter: RecordFilterDto,
   ) {
-    return this.recordsService.findAll(filter, filter);
+    const pageOptions = new PageOptionsDto();
+    pageOptions.page = filter.page;
+    pageOptions.limit = filter.limit;
+    pageOptions.sort = filter.sort;
+    return this.recordsService.findAll(pageOptions, filter);
   }
 
   @Public()
   @Get('search')
   search(@Query(new ZodValidationPipe(RecordFilterSchema)) filter: RecordFilterDto) {
-    return this.recordsService.search(filter.q, filter);
+    const pageOptions = new PageOptionsDto();
+    pageOptions.page = filter.page;
+    pageOptions.limit = filter.limit;
+    return this.recordsService.search(filter.q, pageOptions);
   }
 
   @Public()

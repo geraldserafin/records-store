@@ -43,7 +43,47 @@ export class PurchasesService {
     return await this.ordersRepository.find({
       where: { user: { id: userId } },
       order: { id: 'DESC' },
+      relations: ['items', 'items.record', 'items.record.mainArtist'],
     });
+  }
+
+  async findCollectionByUser(userId: number) {
+    const orders = await this.ordersRepository.find({
+      where: { user: { id: userId } },
+      relations: ['items', 'items.record', 'items.record.mainArtist'],
+    });
+
+    const collectionMap = new Map();
+    orders.forEach((order) => {
+      order.items?.forEach((item) => {
+        if (item.record && !collectionMap.has(item.record.id)) {
+          collectionMap.set(item.record.id, item.record);
+        }
+      });
+    });
+
+    return Array.from(collectionMap.values());
+  }
+
+  async getStats() {
+    const totalRevenue = await this.ordersRepository
+      .createQueryBuilder('order')
+      .select('SUM(order.totalAmount)', 'sum')
+      .getRawOne();
+
+    const revenueByDay = await this.ordersRepository
+      .createQueryBuilder('order')
+      .select("DATE_FORMAT(order.createdAt, '%Y-%m-%d')", 'date')
+      .addSelect('SUM(order.totalAmount)', 'sum')
+      .groupBy('date')
+      .orderBy('date', 'ASC')
+      .limit(30)
+      .getRawMany();
+
+    return {
+      totalRevenue: Number(totalRevenue.sum || 0),
+      revenueByDay: revenueByDay.map(item => ({ date: item.date, sum: Number(item.sum) })),
+    };
   }
 
   async findOne(id: number) {

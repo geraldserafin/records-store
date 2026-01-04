@@ -1,9 +1,14 @@
 import { createStore } from "solid-js/store";
-import { createRoot } from "solid-js";
+import { createRoot, createEffect } from "solid-js";
 
 function createCart() {
+  const stored = localStorage.getItem("cart");
   const [state, setState] = createStore({
-    items: [],
+    items: stored ? JSON.parse(stored) : [],
+  });
+
+  createEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(state.items));
   });
 
   const addToCart = (record) => {

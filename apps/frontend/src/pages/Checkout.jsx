@@ -1,4 +1,4 @@
-import { createResource, createSignal, Show, createEffect } from "solid-js";
+import { createResource, createSignal, Show, createEffect, For } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import api from "../lib/api";
 import cart from "../lib/cart";
@@ -71,82 +71,116 @@ export default function Checkout() {
   };
 
   return (
-    <div class="p-4">
+    <div class="p-4 flex flex-col gap-8">
       <h1>Checkout</h1>
+      
       <Show when={cart.state.items.length === 0}>
-        <p>Your cart is empty. <button onClick={() => navigate("/")}>Go shop</button></p>
+        <p>Your cart is empty. <button onClick={() => navigate("/")} class="underline">Go shop</button></p>
       </Show>
 
       <Show when={cart.state.items.length > 0}>
-        <form onSubmit={handleSubmit} class="flex flex-col gap-4 max-w-md">
-          <div class="flex flex-col">
-            <label>Email</label>
-            <input 
-              type="email" 
-              value={guestEmail()} 
-              onInput={(e) => setGuestEmail(e.target.value)} 
-              required 
-              disabled={!!user()}
-            />
-          </div>
+        <div class="flex flex-col md:flex-row gap-12">
+          {/* Order Summary */}
+          <section class="flex-1 flex flex-col gap-4">
+            <h2 class="border-b border-black">Order Summary</h2>
+            <div class="border border-black divide-y divide-black">
+              <For each={cart.state.items}>
+                {(item) => (
+                  <div class="p-2 flex justify-between items-center gap-4">
+                    <div class="flex gap-4 items-center">
+                      <Show when={item.images?.[0]}>
+                        <img src={item.images[0]} alt={item.name} class="w-16 h-16 object-cover border border-black" />
+                      </Show>
+                      <div>
+                        <p><span class="font-bold">{item.name}</span> by {item.mainArtist?.name}</p>
+                        <p class="text-sm">Quantity: {item.quantity}</p>
+                      </div>
+                    </div>
+                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                )}
+              </For>
+            </div>
+            <p class="text-xl font-bold self-end mt-2">Total: ${cart.total().toFixed(2)}</p>
+          </section>
 
-          <div class="flex flex-col">
-            <label>Full Name</label>
-            <input 
-              type="text" 
-              value={shippingName()} 
-              onInput={(e) => setShippingName(e.target.value)} 
-              required 
-            />
-          </div>
+          {/* Shipping Form */}
+          <section class="flex-1">
+            <h2 class="border-b border-black mb-4">Shipping Details</h2>
+            <form onSubmit={handleSubmit} class="flex flex-col gap-4 max-w-md">
+              <div class="flex flex-col">
+                <label>Email</label>
+                <input 
+                  type="email" 
+                  value={guestEmail()} 
+                  onInput={(e) => setGuestEmail(e.target.value)} 
+                  required 
+                  disabled={!!user()}
+                  class="border border-black p-1"
+                />
+              </div>
 
-          <div class="flex flex-col">
-            <label>Address</label>
-            <input 
-              type="text" 
-              value={shippingAddress()} 
-              onInput={(e) => setShippingAddress(e.target.value)} 
-              required 
-            />
-          </div>
+              <div class="flex flex-col">
+                <label>Full Name</label>
+                <input 
+                  type="text" 
+                  value={shippingName()} 
+                  onInput={(e) => setShippingName(e.target.value)} 
+                  required 
+                  class="border border-black p-1"
+                />
+              </div>
 
-          <div class="flex flex-col">
-            <label>City</label>
-            <input 
-              type="text" 
-              value={shippingCity()} 
-              onInput={(e) => setShippingCity(e.target.value)} 
-              required 
-            />
-          </div>
+              <div class="flex flex-col">
+                <label>Address</label>
+                <input 
+                  type="text" 
+                  value={shippingAddress()} 
+                  onInput={(e) => setShippingAddress(e.target.value)} 
+                  required 
+                  class="border border-black p-1"
+                />
+              </div>
 
-          <div class="flex flex-col">
-            <label>Postal Code</label>
-            <input 
-              type="text" 
-              value={shippingPostalCode()} 
-              onInput={(e) => setShippingPostalCode(e.target.value)} 
-              required 
-            />
-          </div>
+              <div class="flex flex-col">
+                <label>City</label>
+                <input 
+                  type="text" 
+                  value={shippingCity()} 
+                  onInput={(e) => setShippingCity(e.target.value)} 
+                  required 
+                  class="border border-black p-1"
+                />
+              </div>
 
-          <div class="flex flex-col">
-            <label>Country</label>
-            <input 
-              type="text" 
-              value={shippingCountry()} 
-              onInput={(e) => setShippingCountry(e.target.value)} 
-              required 
-            />
-          </div>
+              <div class="flex flex-col">
+                <label>Postal Code</label>
+                <input 
+                  type="text" 
+                  value={shippingPostalCode()} 
+                  onInput={(e) => setShippingPostalCode(e.target.value)} 
+                  required 
+                  class="border border-black p-1"
+                />
+              </div>
 
-          <div class="mt-4 border-t pt-4">
-            <p class="text-xl font-bold">Total: ${cart.total().toFixed(2)}</p>
-            <button type="submit" class="mt-2 bg-black text-white p-2">
-              Pay with Stripe
-            </button>
-          </div>
-        </form>
+              <div class="flex flex-col">
+                <label>Country</label>
+                <input 
+                  type="text" 
+                  value={shippingCountry()} 
+                  onInput={(e) => setShippingCountry(e.target.value)} 
+                  required 
+                  class="border border-black p-1"
+                />
+              </div>
+
+              <button type="submit" class="mt-4 bg-black text-white p-2 border border-black hover:bg-white hover:text-black transition-colors">
+                Pay with Stripe
+              </button>
+            </form>
+          </section>
+        </div>
       </Show>
     </div>
   );

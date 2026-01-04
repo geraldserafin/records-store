@@ -10,6 +10,10 @@ import {
 export class CreateReviewDto {
   @IsInt()
   @Min(1)
+  recordId: number;
+
+  @IsInt()
+  @Min(1)
   @Max(10)
   score: number;
 

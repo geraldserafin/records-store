@@ -9,9 +9,40 @@ export class ReviewPageDto extends PageOptionsDto {
   @Type(() => Number)
   limit: number = 10;
 
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  @Type(() => Number)
-  page: number = 1;
-}
+    @IsInt()
+
+    @Min(1)
+
+    @IsOptional()
+
+    @Type(() => Number)
+
+    page: number = 1;
+
+  
+
+    @IsInt()
+
+    @Min(1)
+
+    @IsOptional()
+
+    @Type(() => Number)
+
+    recordId?: number;
+
+  
+
+    @IsInt()
+
+    @Min(1)
+
+    @IsOptional()
+
+    @Type(() => Number)
+
+    userId?: number;
+
+  }
+
+  

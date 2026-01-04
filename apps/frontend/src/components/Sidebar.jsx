@@ -22,9 +22,21 @@ export default function Sidebar() {
   };
 
   return (
-    <div class="flex flex-col gap-3 bg-white p-2">
-      <form onSubmit={handleSearch} class="flex">
-        <input ref={searchInput} type="search" placeholder="Search..." />
+    <div class="flex flex-col gap-3 h-full bg-white p-2 overflow-x-hidden">
+      <img
+        class="scale-150 mt-8"
+        src="https://assets.bigcartel.com/theme_images/62869080/wleps+stara+TONFA+plonanca.png?auto=format&fit=max&h=1508&w=1508"
+      />
+
+      <h1 class="font-bold font-serif text-center w-full">BIGA* RECORDS</h1>
+
+      <form onSubmit={handleSearch} class="flex w-full">
+        <input
+          ref={searchInput}
+          type="search"
+          placeholder="Search..."
+          class="w-full box-border"
+        />
       </form>
 
       <nav class="flex flex-col">
@@ -33,61 +45,34 @@ export default function Sidebar() {
           <For each={genres()}>
             {(genre) => (
               <li>
-                <A href={`/genre/${genre.slug}`}>{genre.name}</A>
+                <A href={`/genres/${genre.slug}`}>{genre.name}</A>
               </li>
             )}
           </For>
         </ul>
       </nav>
 
-      <nav class="flex flex-col">
-        <h3>Discover</h3>
-        <ul>
-          <li>
-            <A href="/section/bestsellers">Bestsellers</A>
-          </li>
-          <li>
-            <A href="/section/classics">Classics</A>
-          </li>
-          <li>
-            <A href="/section/new-arrivals">New Arrivals</A>
-          </li>
-        </ul>
-      </nav>
-
       <Cart />
 
-      <section>
-        <Show
-          when={userStore.user()}
-          fallback={
-            <a href="http://localhost:1000/auth/google">Sign in with Google</a>
-          }
-        >
-          <h4>Your orders</h4>
-          <Show
-            when={userStore.orders()?.length > 0}
-            fallback={<p>No orders</p>}
-          >
-            <ul>
-              <For each={userStore.orders()}>
-                {(order) => (
-                  <li>
-                    <A href={`/order/${order.id}`}>Order #{order.id}</A>
-                  </li>
-                )}
-              </For>
-            </ul>
+      <Show
+        when={userStore.user()}
+        fallback={
+          <a href="http://localhost:1000/auth/google">Sign in with Google</a>
+        }
+      >
+        <section class="space-y-3">
+          <Show when={userStore.user()?.role === "admin"}>
+            <div>
+              <A href="/admin">Admin Panel</A>
+            </div>
           </Show>
 
           <div>
-            <Show when={userStore.user()?.role === "admin"}>
-              <A href="/admin">Admin Panel</A>
-            </Show>
+            <A href="/profile">Your Profile</A>
           </div>
 
           <button
-            class="mt-4 text-left text-red-600 hover:text-red-800"
+            class="text-left text-red-600 hover:text-red-800"
             onClick={async () => {
               await api.get("auth/logout");
               window.location.href = "/";
@@ -95,8 +80,8 @@ export default function Sidebar() {
           >
             Logout
           </button>
-        </Show>
-      </section>
+        </section>
+      </Show>
     </div>
   );
 }

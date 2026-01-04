@@ -1,24 +1,33 @@
-@import "tailwindcss/theme" layer(theme);
-@import "tailwindcss/utilities" layer(utilities);
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    font-family: var(--font-sans);
-    line-height: 1.5;
-    background-color: #e5e5e5;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-size: inherit;
-    font-weight: inherit;
-    margin: 0;
-  }
-
-  ul {
-    margin: 0;
-  }
+.shop-theme {
+  background-image: url("https://img.freepik.com/premium-photo/black-white-grain-gradient-background-grunge-wall-texture-old-grunge-scratched-background_1026065-96404.jpg");
+  background-size: cover;
+  background-attachment: fixed;
 }
 
-a {
-  color: blue;
+.shop-theme a {
+  all: revert;
+}
+
+.shop-theme ul {
+  all: revert;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: 20px;
+}
+
+.shop-theme button {
+  all: revert;
+}
+
+.shop-theme input {
+  appearance: auto;
+  box-sizing: border-box;
+  background-color: field;
+  color: fieldtext;
+  border-style: inset;
+  border-width: 2px;
+  border-color: lightgray;
+  padding: 1px 2px;
 }

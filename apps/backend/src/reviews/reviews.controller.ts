@@ -1,11 +1,30 @@
-import { Controller, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Param, Delete, ParseIntPipe, Post, Get, Body, Query, Req, UsePipes } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
-import { Admin } from 'src/auth/decorators/access.decorator';
-import { ApiOperation } from '@nestjs/swagger';
+import { Admin, Public } from '../auth/decorators/access.decorator';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { CreateReviewSchema, ReviewPageSchema, CreateReviewDto, ReviewPageDto } from './dto/review.schema';
+import { Request } from 'express';
 
+@ApiTags('Reviews')
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
+
+  @Post()
+  @UsePipes(new ZodValidationPipe(CreateReviewSchema))
+  @ApiOperation({ summary: 'Create a review' })
+  create(@Body() createReviewDto: CreateReviewDto, @Req() request: Request) {
+    const user = (request as any).user;
+    return this.reviewsService.create(user.id, createReviewDto);
+  }
+
+  @Public()
+  @Get()
+  @ApiOperation({ summary: 'List reviews' })
+  findAll(@Query(new ZodValidationPipe(ReviewPageSchema)) query: ReviewPageDto) {
+    return this.reviewsService.findAll(query);
+  }
 
   @Admin()
   @Delete(':reviewId')

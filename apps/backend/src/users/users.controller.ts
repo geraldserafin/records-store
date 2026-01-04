@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserDto } from './dto/user.dto';
@@ -18,6 +18,19 @@ export class UsersController {
   async me(@CurrentUser() user: User) {
     if (!user) return null;
     return UserDto.toInstance(user);
+  }
+
+  @Public()
+  @Get(':id')
+  @ApiOperation({ summary: 'Get public user profile' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const user = await this.usersService.findOne({ id });
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      photoUrl: user.photoUrl,
+    };
   }
 
   @Patch('me')

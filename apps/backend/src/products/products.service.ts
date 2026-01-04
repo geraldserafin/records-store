@@ -90,7 +90,13 @@ export class ProductsService {
         queryBuilder.innerJoin('product.genres', 'filterGenre', 'filterGenre.id = :genreId', { genreId });
     }
 
-    return await createPage(queryBuilder, pageOptions);
+    console.log('Using safe createPage call without filters');
+    const cleanOptions = new PageOptionsDto();
+    cleanOptions.page = pageOptions.page;
+    cleanOptions.limit = pageOptions.limit;
+    cleanOptions.sort = pageOptions.sort;
+    
+    return await createPage(queryBuilder, cleanOptions);
   }
 
   async findOne(id: number) {

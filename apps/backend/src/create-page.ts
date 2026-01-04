@@ -24,6 +24,10 @@ export async function createPage<T>(
 
   if (pageOptions.filter) {
     Object.entries(pageOptions.filter).forEach(([field, value]) => {
+      // Explicitly skip relationship IDs that cause SQL errors if handled by service
+      if (['artistId', 'genreId', 'categoryId'].includes(field)) return;
+      if (value === undefined || value === null) return;
+
       const path = relationMappings[field] || `${alias}.${field}`;
 
       queryBuilder.andWhere(`${path} LIKE :name`, {

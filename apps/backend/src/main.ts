@@ -13,7 +13,7 @@ async function bootstrap() {
   const { sessionSecret, sessionCookieMaxAge } = sessionConfig();
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: true,
     credentials: true,
   });
 

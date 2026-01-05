@@ -20,5 +20,5 @@ export class CreateReviewDto {
   @IsString()
   @IsOptional()
   @MinLength(1)
-  description: string;
+  description?: string;
 }

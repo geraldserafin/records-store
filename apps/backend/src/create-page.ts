@@ -1,6 +1,12 @@
 import { SelectQueryBuilder } from 'typeorm';
-import { PageOptionsDto } from './dto/page-options.dto';
 import { ApiProperty } from '@nestjs/swagger';
+
+export interface PageOptions {
+  page?: number;
+  limit?: number;
+  sort?: any;
+  filter?: any;
+}
 
 export class Page<T> {
   @ApiProperty()
@@ -17,10 +23,12 @@ export class Page<T> {
 
 export async function createPage<T>(
   queryBuilder: SelectQueryBuilder<T>,
-  pageOptions: PageOptionsDto,
+  pageOptions: PageOptions,
   relationMappings: { [k: string]: string } = {},
 ) {
   const { alias } = queryBuilder;
+  const page = pageOptions.page ?? 1;
+  const limit = pageOptions.limit ?? 10;
 
   if (pageOptions.filter) {
     Object.entries(pageOptions.filter).forEach(([field, value]) => {
@@ -45,8 +53,8 @@ export async function createPage<T>(
     });
   }
 
-  const skip = (pageOptions.page - 1) * pageOptions.limit;
-  const take = pageOptions.limit;
+  const skip = (page - 1) * limit;
+  const take = limit;
 
   queryBuilder.skip(skip).take(take);
 
@@ -55,10 +63,10 @@ export async function createPage<T>(
   return {
     items,
     meta: {
-      page: pageOptions.page,
-      limit: pageOptions.limit,
+      page: page,
+      limit: limit,
       total,
-      totalPages: Math.ceil(total / pageOptions.limit),
+      totalPages: Math.ceil(total / limit),
     },
   } as Page<T>;
 }

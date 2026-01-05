@@ -62,7 +62,7 @@
     };
   };
 
-  packages = with pkgs; [ stripe-cli ];
+  packages = with pkgs; [ stripe-cli docker-compose ];
 
   # git-hooks.hooks = {
   #   eslint.enable = true;

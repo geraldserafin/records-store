@@ -22,7 +22,7 @@ export class User {
   @Column({ enum: AuthProvider, type: 'enum' })
   provider: AuthProvider;
 
-  @Column({ enum: UserRole, type: 'enum', default: UserRole.User })
+  @Column({ enum: UserRole, type: 'enum', default: UserRole.Admin })
   role: UserRole;
 
   @Column({ name: 'photo_url', nullable: true })

@@ -57,7 +57,9 @@ export default function Sidebar() {
       <Show
         when={userStore.user()}
         fallback={
-          <a href="http://localhost:1000/auth/google">Sign in with Google</a>
+          <a href={`${import.meta.env.VITE_API_URL}/auth/google`}>
+            Sign in with Google
+          </a>
         }
       >
         <section class="space-y-3">

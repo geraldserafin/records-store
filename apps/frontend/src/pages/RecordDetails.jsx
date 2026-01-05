@@ -150,7 +150,7 @@ export default function RecordDetails() {
             </Show>
             
             <Show when={!userStore.user()}>
-              <p>Please <a href="http://localhost:1000/auth/google" class="underline">log in</a> to write a review.</p>
+              <p>Please <a href={`${import.meta.env.VITE_API_URL}/auth/google`} class="underline">log in</a> to write a review.</p>
             </Show>
 
             <div class="flex flex-col gap-4">

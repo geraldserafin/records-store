@@ -1,0 +1,33 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          # 1. Ensure the directory exists
+          mkdir -p ~/app
+          
+          # 2. Navigate to the directory
+          cd ~/app
+          
+          # 3. Pull the latest changes (if it's a git repo)
+          # Note: On first run, you'll need to git clone manually:
+          # git clone https://github.com/YOUR_USER/YOUR_REPO.git .
+          git pull origin main
+          
+          # 4. Rebuild and restart containers
+          # We use --build to ensure code changes are picked up
+          docker compose up -d --build --remove-orphans

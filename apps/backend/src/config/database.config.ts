@@ -11,7 +11,7 @@ export default registerAs('database', () => ({
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*{.ts,.js}'],
   migrationsTableName: 'migrations_history',
-  synchronize: false,
-  migrationsRun: true,
+  synchronize: true,
+  migrationsRun: false,
   autoLoadEntities: true,
 }));

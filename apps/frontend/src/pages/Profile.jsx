@@ -74,7 +74,7 @@ export default function Profile() {
 
       <Show when={!data.loading && !data()?.user}>
         <div>
-          <p>Please <a href="http://localhost:1000/auth/google" class="underline">log in</a> to view your profile.</p>
+          <p>Please <a href={`${import.meta.env.VITE_API_URL}/auth/google`} class="underline">log in</a> to view your profile.</p>
         </div>
       </Show>
 
